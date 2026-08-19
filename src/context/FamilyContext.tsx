@@ -1,21 +1,33 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { supabase, isSupabaseConfigured, syncSupabaseWrite, syncSupabaseUpdate, syncSupabaseDelete, getCurrentAuthUser, loadUserFamilyState, onAuthChange, signOutUser, type AuthUser } from '../lib/supabase';
-import { 
-  Family, 
-  Profile, 
-  Task, 
-  Reward, 
-  Redemption, 
-  ActivityLog, 
-  ActiveTab, 
-  ParentSubTab 
+import {
+  supabase,
+  isSupabaseConfigured,
+  syncSupabaseWrite,
+  syncSupabaseUpdate,
+  syncSupabaseDelete,
+  getCurrentAuthUser,
+  loadUserFamilyState,
+  onAuthChange,
+  signOutUser,
+  type AuthUser,
+} from '../lib/supabase';
+import { applyLevelUp, canRedeem, applyRedeem } from '../lib/gameLogic';
+import {
+  Family,
+  Profile,
+  Task,
+  Reward,
+  Redemption,
+  ActivityLog,
+  ActiveTab,
+  ParentSubTab,
 } from '../types';
-import { 
-  INITIAL_FAMILY, 
-  INITIAL_PROFILES, 
-  INITIAL_TASKS, 
-  INITIAL_REWARDS 
+import {
+  INITIAL_FAMILY,
+  INITIAL_PROFILES,
+  INITIAL_TASKS,
+  INITIAL_REWARDS,
 } from '../data/mockData';
 
 interface LevelUpInfo {
@@ -46,6 +58,7 @@ interface FamilyContextType {
   showOnboarding: boolean;
   authUser: AuthUser | null;
   isAuthenticated: boolean;
+  isSyncing: boolean;
 
   // Actions
   setActiveTab: (tab: ActiveTab) => void;
@@ -119,6 +132,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -139,7 +153,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const isSupabaseSessionActive = isSupabaseConfigured && Boolean(authUser);
 
-  // Sync to local storage only for demo mode. Real Supabase sessions should stay source of truth.
+  // Sync to local storage only for demo mode. Real Supabase sessions stay source of truth.
   useEffect(() => {
     if (isSupabaseSessionActive) {
       localStorage.setItem('fq_session_mode', 'supabase');
@@ -156,6 +170,83 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     localStorage.setItem('fq_logs', JSON.stringify(activityLogs));
   }, [family, profiles, currentProfileId, tasks, rewards, redemptions, activityLogs, isSupabaseSessionActive]);
 
+  // Re-fetch the family state from Supabase. Preserves the current profile selection
+  // so a live update never yanks the user back to their own profile.
+  const refreshFamilyData = useCallback(async () => {
+    if (!isSupabaseConfigured || !authUser) {
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const nextState = await loadUserFamilyState();
+      if (!nextState?.family || !nextState.profiles.length) {
+        return;
+      }
+
+      setFamily(nextState.family);
+      setProfiles(nextState.profiles as Profile[]);
+      setTasks(nextState.tasks as Task[]);
+      setRewards(nextState.rewards as Reward[]);
+      setRedemptions((nextState.redemptions as Redemption[]) ?? []);
+      setActivityLogs((nextState.activityLogs as ActivityLog[]) ?? []);
+    } catch (error) {
+      console.warn('Failed to refresh family session from Supabase:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [authUser]);
+
+  const currentProfile = profiles.find((p) => p.id === currentProfileId) || profiles[0];
+
+  const addToast = (
+    title: string,
+    description?: string,
+    type: 'success' | 'info' | 'error' | 'warning' = 'info'
+  ) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, title, description, type }]);
+    setTimeout(() => {
+      dismissToast(id);
+    }, 4000);
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const switchProfile = (profileId: string) => {
+    const target = profiles.find((p) => p.id === profileId);
+    if (target) {
+      setCurrentProfileId(profileId);
+      addToast(
+        `Perfil alternado para ${target.full_name}`,
+        `Modo: ${target.role === 'parent' ? 'Pai/Mãe' : 'Filho/Filha'}`,
+        'info'
+      );
+    }
+  };
+
+  const applyFamilySession = (
+    nextFamily: Family,
+    nextProfiles: Profile[],
+    nextCurrentProfileId?: string
+  ) => {
+    setFamily(nextFamily);
+    setProfiles(nextProfiles);
+
+    const fallbackProfileId =
+      nextCurrentProfileId || nextProfiles.find((p) => p.role === 'parent')?.id || nextProfiles[0]?.id;
+    if (fallbackProfileId) {
+      setCurrentProfileId(fallbackProfileId);
+    }
+  };
+
+  const dismissLevelUpModal = () => {
+    setLevelUpModal(null);
+  };
+
+  // Initial load + auth state handling
   useEffect(() => {
     if (!isSupabaseConfigured) {
       return;
@@ -207,124 +298,92 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, []);
 
-  const currentProfile = profiles.find((p) => p.id === currentProfileId) || profiles[0];
+  // Real-time sync: keep every device in the family in lock-step. External
+  // changes (e.g. a parent approving a task) instantly reflect on the child's screen.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !authUser || !family?.id) return;
 
-  const addToast = (title: string, description?: string, type: 'success' | 'info' | 'error' | 'warning' = 'info') => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, title, description, type }]);
-    setTimeout(() => {
-      dismissToast(id);
-    }, 4000);
-  };
+    const familyId = family.id;
+    const channel = supabase
+      .channel(`family:${familyId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks', filter: `family_id=eq.${familyId}` },
+        () => refreshFamilyData()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles', filter: `family_id=eq.${familyId}` },
+        () => refreshFamilyData()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rewards', filter: `family_id=eq.${familyId}` },
+        () => refreshFamilyData()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'redemptions', filter: `family_id=eq.${familyId}` },
+        () => refreshFamilyData()
+      )
+      .subscribe();
 
-  const dismissToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
-
-  const switchProfile = (profileId: string) => {
-    const target = profiles.find((p) => p.id === profileId);
-    if (target) {
-      setCurrentProfileId(profileId);
-      addToast(`Perfil alternado para ${target.full_name}`, `Modo: ${target.role === 'parent' ? 'Pai/Mãe' : 'Filho/Filha'}`, 'info');
-    }
-  };
-
-  const applyFamilySession = (nextFamily: Family, nextProfiles: Profile[], nextCurrentProfileId?: string) => {
-    setFamily(nextFamily);
-    setProfiles(nextProfiles);
-
-    const fallbackProfileId = nextCurrentProfileId || nextProfiles.find((p) => p.role === 'parent')?.id || nextProfiles[0]?.id;
-    if (fallbackProfileId) {
-      setCurrentProfileId(fallbackProfileId);
-    }
-  };
-
-  const dismissLevelUpModal = () => {
-    setLevelUpModal(null);
-  };
-
-  const refreshFamilyData = async () => {
-    if (!isSupabaseConfigured || !authUser) {
-      return;
-    }
-
-    try {
-      const nextState = await loadUserFamilyState();
-      if (!nextState?.family || !nextState.profiles.length) {
-        return;
-      }
-
-      setFamily(nextState.family);
-      setProfiles(nextState.profiles as Profile[]);
-      setTasks(nextState.tasks as Task[]);
-      setRewards(nextState.rewards as Reward[]);
-      setRedemptions((nextState.redemptions as Redemption[]) ?? []);
-      setActivityLogs((nextState.activityLogs as ActivityLog[]) ?? []);
-      setCurrentProfileId(nextState.myProfileId);
-    } catch (error) {
-      console.warn('Failed to refresh family session from Supabase:', error);
-    }
-  };
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [authUser, family?.id, refreshFamilyData]);
 
   /**
-   * Marcar uma tarefa como concluída pelo filho
-   * Status muda para 'waiting_approval' (Aguardando Aprovação dos Pais)
+   * Persist a set of writes to Supabase and, on failure, roll the UI back to
+   * the server truth via a refresh. Returns true when every write succeeded.
    */
+  const persistWrites = async (writes: Promise<{ data: Record<string, unknown> | null; error: Error | null }>[]) => {
+    if (!isSupabaseConfigured) return true;
+    const results = await Promise.all(writes);
+    const failed = results.some((r) => r.error);
+    if (failed) {
+      addToast('Erro ao salvar', 'Não foi possível sincronizar com o servidor. Tente novamente.', 'error');
+      await refreshFamilyData();
+      return false;
+    }
+    return true;
+  };
+
   const completeTask = async (taskId: string) => {
     if (isSupabaseConfigured && !authUser) {
       setShowOnboarding(true);
       addToast('Autenticação necessária', 'Entre em sua conta para concluir missões.', 'warning');
       return;
     }
-    /* =========================================================================
-     * TODO: [SUPABASE INTEGRATION - COMPLETE TASK]
-     * const { data, error } = await supabase
-     *   .from('tasks')
-     *   .update({
-     *     status: 'waiting_approval',
-     *     submitted_at: new Date().toISOString(),
-     *   })
-     *   .eq('id', taskId)
-     *   .select()
-     *   .single();
-     * ========================================================================= */
-
-    setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id === taskId) {
-          return {
-            ...t,
-            status: 'waiting_approval',
-            submitted_at: 'Agora mesmo',
-          };
-        }
-        return t;
-      })
-    );
-
-    if (isSupabaseConfigured) {
-      await syncSupabaseUpdate('tasks', taskId, {
-        status: 'waiting_approval',
-        submitted_at: 'Agora mesmo',
-      });
-    }
 
     const task = tasks.find((t) => t.id === taskId);
+
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, status: 'waiting_approval', submitted_at: 'Agora mesmo' }
+          : t
+      )
+    );
+
+    const ok = await persistWrites([
+      syncSupabaseUpdate('tasks', taskId, {
+        status: 'waiting_approval',
+        submitted_at: 'Agora mesmo',
+      }),
+    ]);
+
+    if (!ok) return;
+
     addToast(
       'Missão enviada!',
       `"${task?.title || 'Tarefa'}" está aguardando aprovação dos pais.`,
       'success'
     );
-
-    if (isSupabaseConfigured) {
-      await refreshFamilyData();
-    }
   };
 
   /**
-   * Aprovação da tarefa pelo Pai/Mãe
-   * Adiciona XP e saldo em dinheiro ao perfil da criança
-   * Verifica se atingiu novo nível para disparar o modal Level Up
+   * Approvação da tarefa pelo Pai/Mãe: aplica XP + saldo (R$) e dispara level-up.
    */
   const approveTask = async (taskId: string) => {
     if (isSupabaseConfigured && !authUser) {
@@ -342,97 +401,30 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const xpGained = targetTask.reward_value || 0;
     const moneyGained = targetTask.reward_money || 0;
 
-    const currentXp = assignedChild.xp + xpGained;
-    let newLevel = assignedChild.level;
-    let nextThreshold = assignedChild.xp_to_next_level;
-    let xpBase = assignedChild.xp_base;
-    let leveledUp = false;
+    const result = applyLevelUp(assignedChild, xpGained, moneyGained);
 
-    // Level up: every 500 XP above the current level base advances one level.
-    while (currentXp >= nextThreshold) {
-      xpBase = nextThreshold;
-      newLevel += 1;
-      nextThreshold += 500;
-      leveledUp = true;
-    }
-
-    /* =========================================================================
-     * TODO: [SUPABASE INTEGRATION - APPROVE TASK]
-     * 1. Atualizar status da tarefa:
-     * const { error: taskErr } = await supabase
-     *   .from('tasks')
-     *   .update({
-     *     status: 'completed',
-     *     approved_at: new Date().toISOString(),
-     *   })
-     *   .eq('id', taskId);
-     *
-     * 2. Atualizar XP, Level e Saldo no perfil:
-     * const { error: profErr } = await supabase
-     *   .from('profiles')
-     *   .update({
-     *     xp: currentXp,
-     *     level: newLevel,
-     *     xp_to_next_level: nextThreshold,
-     *     balance: assignedChild.balance + moneyGained,
-     *   })
-     *   .eq('id', assignedChild.id);
-     *
-     * 3. Registrar no log de atividades:
-     * await supabase.from('activity_logs').insert({
-     *   family_id: family.id,
-     *   profile_id: assignedChild.id,
-     *   type: 'task_approved',
-     *   title: targetTask.title,
-     *   points_change: xpGained,
-     *   money_change: moneyGained,
-     * });
-     * ========================================================================= */
-
-    // Update Tasks
     setTasks((prev) =>
       prev.map((t) =>
-        t.id === taskId
-          ? { ...t, status: 'completed', approved_at: 'Agora mesmo' }
-          : t
+        t.id === taskId ? { ...t, status: 'completed', approved_at: 'Agora mesmo' } : t
       )
     );
 
-    if (isSupabaseConfigured) {
-      await syncSupabaseUpdate('tasks', taskId, {
-        status: 'completed',
-        approved_at: 'Agora mesmo',
-      });
-    }
-
-    // Update Profiles
     setProfiles((prev) =>
       prev.map((p) =>
         p.id === assignedChild.id
           ? {
               ...p,
-              xp: currentXp,
-              level: newLevel,
-              xp_base: xpBase,
-              xp_to_next_level: nextThreshold,
-              balance: p.balance + moneyGained,
+              xp: result.xp,
+              level: result.level,
+              xp_base: result.xp_base,
+              xp_to_next_level: result.xp_to_next_level,
+              balance: result.balance,
             }
           : p
       )
     );
 
-    if (isSupabaseConfigured) {
-      await syncSupabaseUpdate('profiles', assignedChild.id, {
-        xp: currentXp,
-        level: newLevel,
-        xp_base: xpBase,
-        xp_to_next_level: nextThreshold,
-        balance: assignedChild.balance + moneyGained,
-      });
-    }
-
-    // Activity Log
-    const logItem = {
+    const logItem: ActivityLog = {
       id: Math.random().toString(36).substring(2, 9),
       family_id: family.id,
       profile_id: assignedChild.id,
@@ -442,13 +434,23 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       points_change: xpGained,
       money_change: moneyGained,
       created_at: new Date().toISOString(),
-    } as ActivityLog;
+    };
 
     setActivityLogs((prev) => [logItem, ...prev]);
 
-    if (isSupabaseConfigured) {
-      await syncSupabaseWrite('activity_logs', logItem as unknown as Record<string, unknown>);
-    }
+    const ok = await persistWrites([
+      syncSupabaseUpdate('tasks', taskId, { status: 'completed', approved_at: 'Agora mesmo' }),
+      syncSupabaseUpdate('profiles', assignedChild.id, {
+        xp: result.xp,
+        level: result.level,
+        xp_base: result.xp_base,
+        xp_to_next_level: result.xp_to_next_level,
+        balance: result.balance,
+      }),
+      syncSupabaseWrite('activity_logs', logItem as unknown as Record<string, unknown>),
+    ]);
+
+    if (!ok) return;
 
     addToast(
       'Missão Aprovada! 🌟',
@@ -456,13 +458,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       'success'
     );
 
-    if (leveledUp) {
+    if (result.leveledUp) {
       setLevelUpModal({
         profileName: assignedChild.full_name,
-        newLevel: newLevel,
+        newLevel: result.level,
         unlockedTitle: 'Mestre das Missões',
       });
-      // Fire confetti burst
       confetti({
         particleCount: 120,
         spread: 70,
@@ -470,15 +471,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         colors: ['#3525cd', '#6b38d4', '#4edea3', '#ffc107', '#ff6b81'],
       });
     }
-
-    if (isSupabaseConfigured) {
-      await refreshFamilyData();
-    }
   };
 
-  /**
-   * Rejeitar tarefa com retorno ao status 'pending'
-   */
   const rejectTask = async (taskId: string, reason?: string) => {
     if (isSupabaseConfigured && !authUser) {
       setShowOnboarding(true);
@@ -486,36 +480,21 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
-    /* =========================================================================
-     * TODO: [SUPABASE INTEGRATION - REJECT TASK]
-     * await supabase
-     *   .from('tasks')
-     *   .update({
-     *     status: 'pending',
-     *     rejection_reason: reason || 'Precisa refazer alguns detalhes',
-     *   })
-     *   .eq('id', taskId);
-     * ========================================================================= */
+    const rejectedTask = tasks.find((t) => t.id === taskId);
+    const rejectReason = reason || 'Precisa refazer alguns pontos antes da aprovação.';
 
     setTasks((prev) =>
       prev.map((t) =>
-        t.id === taskId
-          ? {
-              ...t,
-              status: 'pending',
-              rejection_reason: reason || 'Precisa refazer alguns pontos antes da aprovação.',
-            }
-          : t
+        t.id === taskId ? { ...t, status: 'pending', rejection_reason: rejectReason } : t
       )
     );
-
-    const rejectedTask = tasks.find((t) => t.id === taskId);
 
     const rejectLog: ActivityLog = {
       id: `log-${Date.now()}`,
       family_id: family.id,
       profile_id: rejectedTask?.assigned_to ?? currentProfile.id,
-      profile_name: (profiles.find((p) => p.id === rejectedTask?.assigned_to)?.full_name) || 'Filho(a)',
+      profile_name:
+        (profiles.find((p) => p.id === rejectedTask?.assigned_to)?.full_name) || 'Filho(a)',
       type: 'task_rejected',
       title: rejectedTask?.title ?? 'Tarefa',
       points_change: 0,
@@ -524,24 +503,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setActivityLogs((prev) => [rejectLog, ...prev]);
 
-    if (isSupabaseConfigured) {
-      await syncSupabaseUpdate('tasks', taskId, {
-        status: 'pending',
-        rejection_reason: reason || 'Precisa refazer alguns pontos antes da aprovação.',
-      });
-      await syncSupabaseWrite('activity_logs', rejectLog as unknown as Record<string, unknown>);
-    }
+    const ok = await persistWrites([
+      syncSupabaseUpdate('tasks', taskId, { status: 'pending', rejection_reason: rejectReason }),
+      syncSupabaseWrite('activity_logs', rejectLog as unknown as Record<string, unknown>),
+    ]);
+
+    if (!ok) return;
 
     addToast('Missão Rejeitada', 'A tarefa retornou para a lista com status pendente.', 'warning');
-
-    if (isSupabaseConfigured) {
-      await refreshFamilyData();
-    }
   };
 
-  /**
-   * Criar nova missão (Pai/Mãe)
-   */
   const createTask = async (
     taskData: Omit<Task, 'id' | 'created_at' | 'status' | 'family_id' | 'created_by'>
   ) => {
@@ -550,20 +521,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       addToast('Autenticação necessária', 'Entre para criar missões para a família.', 'warning');
       return;
     }
-
-    /* =========================================================================
-     * TODO: [SUPABASE INTEGRATION - CREATE TASK]
-     * const { data, error } = await supabase
-     *   .from('tasks')
-     *   .insert([{
-     *     ...taskData,
-     *     family_id: family.id,
-     *     created_by: currentProfile.id,
-     *     status: 'pending'
-     *   }])
-     *   .select()
-     *   .single();
-     * ========================================================================= */
 
     const newTask: Task = {
       ...taskData,
@@ -576,33 +533,27 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setTasks((prev) => [newTask, ...prev]);
 
-    if (isSupabaseConfigured) {
-      await syncSupabaseWrite('tasks', newTask as unknown as Record<string, unknown>);
-    }
+    const ok = await persistWrites([
+      syncSupabaseWrite('tasks', newTask as unknown as Record<string, unknown>),
+    ]);
+
+    if (!ok) return;
 
     addToast('Nova Missão Criada!', `"${newTask.title}" adicionada com sucesso.`, 'success');
-
-    if (isSupabaseConfigured) {
-      await refreshFamilyData();
-    }
   };
 
   const deleteTask = async (taskId: string) => {
-    /* =========================================================================
-     * TODO: [SUPABASE INTEGRATION - DELETE TASK]
-     * await supabase.from('tasks').delete().eq('id', taskId);
-     * ========================================================================= */
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
 
-    if (isSupabaseConfigured) {
-      await syncSupabaseDelete('tasks', taskId);
-    }
+    const ok = await persistWrites([syncSupabaseDelete('tasks', taskId)]);
+
+    if (!ok) return;
 
     addToast('Missão removida', undefined, 'info');
   };
 
   /**
-   * Resgatar recompensa na Loja
+   * Resgatar recompensa na Loja (economia híbrida XP + R$).
    */
   const redeemReward = async (rewardId: string): Promise<boolean> => {
     if (isSupabaseConfigured && !authUser) {
@@ -614,52 +565,21 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const reward = rewards.find((r) => r.id === rewardId);
     if (!reward) return false;
 
-    const moneyNeeded = reward.money_cost || 0;
-    if (currentProfile.xp < reward.points_cost) {
-      addToast('Pontos insuficientes', `Você precisa de ${reward.points_cost} XP para este prêmio.`, 'error');
-      return false;
-    }
-    if (moneyNeeded > 0 && currentProfile.balance < moneyNeeded) {
-      addToast('Saldo insuficiente', `Você precisa de R$ ${moneyNeeded.toFixed(2)} para este prêmio.`, 'error');
+    const check = canRedeem(currentProfile, reward);
+    if (!check.ok) {
+      addToast('Não foi possível resgatar', check.reason, 'error');
       return false;
     }
 
-    /* =========================================================================
-     * TODO: [SUPABASE INTEGRATION - REDEEM REWARD]
-     * 1. Deduzir XP e Saldo:
-     * await supabase.from('profiles').update({
-     *   xp: currentProfile.xp - reward.points_cost,
-     *   balance: currentProfile.balance - reward.money_cost,
-     * }).eq('id', currentProfile.id);
-     * 2. Registrar resgate:
-     * await supabase.from('redemptions').insert({
-     *   family_id: family.id,
-     *   reward_id: reward.id,
-     *   profile_id: currentProfile.id,
-     *   points_spent: reward.points_cost,
-     *   status: 'requested',
-     * });
-     * ========================================================================= */
+    const next = applyRedeem(currentProfile, reward);
 
-    // Deduct points and money
     setProfiles((prev) =>
       prev.map((p) =>
         p.id === currentProfile.id
-          ? {
-              ...p,
-              xp: p.xp - reward.points_cost,
-              balance: p.balance - moneyNeeded,
-            }
+          ? { ...p, xp: next.xp, balance: next.balance }
           : p
       )
     );
-
-    if (isSupabaseConfigured) {
-      await syncSupabaseUpdate('profiles', currentProfile.id, {
-        xp: currentProfile.xp - reward.points_cost,
-        balance: currentProfile.balance - moneyNeeded,
-      });
-    }
 
     const newRedemption: Redemption = {
       id: `red-${Date.now()}`,
@@ -689,10 +609,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setActivityLogs((prev) => [redeemLog, ...prev]);
 
-    if (isSupabaseConfigured) {
-      await syncSupabaseWrite('redemptions', newRedemption as unknown as Record<string, unknown>);
-      await syncSupabaseWrite('activity_logs', redeemLog as unknown as Record<string, unknown>);
-    }
+    const ok = await persistWrites([
+      syncSupabaseUpdate('profiles', currentProfile.id, { xp: next.xp, balance: next.balance }),
+      syncSupabaseWrite('redemptions', newRedemption as unknown as Record<string, unknown>),
+      syncSupabaseWrite('activity_logs', redeemLog as unknown as Record<string, unknown>),
+    ]);
+
+    if (!ok) return false;
 
     confetti({
       particleCount: 80,
@@ -707,43 +630,32 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       'success'
     );
 
-    if (isSupabaseConfigured) {
-      await refreshFamilyData();
-    }
-
     return true;
   };
 
-  const createReward = async (
-    rewardData: Omit<Reward, 'id' | 'created_at' | 'family_id'>
-  ) => {
+  const createReward = async (rewardData: Omit<Reward, 'id' | 'created_at' | 'family_id'>) => {
     if (isSupabaseConfigured && !authUser) {
       setShowOnboarding(true);
       addToast('Autenticação necessária', 'Entre para criar recompensas da família.', 'warning');
       return;
     }
 
-    /* =========================================================================
-     * TODO: [SUPABASE INTEGRATION - CREATE REWARD]
-     * const { data, error } = await supabase.from('rewards').insert([{ ...rewardData, family_id: family.id }]);
-     * ========================================================================= */
     const newReward: Reward = {
       ...rewardData,
       id: `rew-${Date.now()}`,
       family_id: family.id,
       created_at: new Date().toISOString(),
     };
+
     setRewards((prev) => [newReward, ...prev]);
 
-    if (isSupabaseConfigured) {
-      await syncSupabaseWrite('rewards', newReward as unknown as Record<string, unknown>);
-    }
+    const ok = await persistWrites([
+      syncSupabaseWrite('rewards', newReward as unknown as Record<string, unknown>),
+    ]);
+
+    if (!ok) return;
 
     addToast('Prêmio adicionado à loja!', `"${newReward.title}" agora pode ser resgatado.`, 'success');
-
-    if (isSupabaseConfigured) {
-      await refreshFamilyData();
-    }
   };
 
   const toggleRewardAvailability = async (rewardId: string) => {
@@ -753,26 +665,35 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
+    const targetReward = rewards.find((r) => r.id === rewardId);
+    if (!targetReward) return;
+
+    const nextAvailable = !targetReward.is_available;
+
     setRewards((prev) =>
-      prev.map((r) =>
-        r.id === rewardId ? { ...r, is_available: !r.is_available } : r
-      )
+      prev.map((r) => (r.id === rewardId ? { ...r, is_available: nextAvailable } : r))
     );
 
-    if (isSupabaseConfigured) {
-      const targetReward = rewards.find((r) => r.id === rewardId);
-      if (targetReward) {
-        await syncSupabaseUpdate('rewards', rewardId, {
-          is_available: !targetReward.is_available,
-        });
-      }
-      await refreshFamilyData();
-    }
+    const ok = await persistWrites([
+      syncSupabaseUpdate('rewards', rewardId, { is_available: nextAvailable }),
+    ]);
+
+    if (!ok) return;
+
+    addToast(
+      nextAvailable ? 'Prêmio disponível!' : 'Prêmio ocultado',
+      `"${targetReward.title}" ${nextAvailable ? 'já pode ser resgatado.' : 'foi retirado da loja.'}`,
+      'info'
+    );
   };
 
   const copyInviteCode = () => {
     navigator.clipboard.writeText(family.invite_code);
-    addToast('Código Copiado!', `Código "${family.invite_code}" copiado para a área de transferência.`, 'success');
+    addToast(
+      'Código Copiado!',
+      `Código "${family.invite_code}" copiado para a área de transferência.`,
+      'success'
+    );
   };
 
   const resetDemoData = () => {
@@ -828,6 +749,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         showOnboarding,
         authUser,
         isAuthenticated: Boolean(authUser),
+        isSyncing,
         setActiveTab,
         setParentSubTab,
         switchProfile,

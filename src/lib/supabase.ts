@@ -39,48 +39,57 @@ export type ProfileRecord = {
   created_at: string;
 };
 
-export const syncSupabaseWrite = async (table: string, payload: Record<string, unknown>) => {
+export interface SyncResult {
+  data: Record<string, unknown> | null;
+  error: Error | null;
+}
+
+export const syncSupabaseWrite = async (
+  table: string,
+  payload: Record<string, unknown>
+): Promise<SyncResult> => {
   if (!isSupabaseConfigured) {
-    return null;
+    return { data: null, error: null };
   }
 
   try {
     const { data, error } = await supabase.from(table).insert([payload]).select().single();
-    if (error) throw error;
-    return data;
+    if (error) return { data: null, error: new Error(error.message) };
+    return { data: data as Record<string, unknown>, error: null };
   } catch (error) {
-    console.warn(`[Supabase] write failed for ${table}:`, error);
-    return null;
+    return { data: null, error: error as Error };
   }
 };
 
-export const syncSupabaseUpdate = async (table: string, id: string, payload: Record<string, unknown>) => {
+export const syncSupabaseUpdate = async (
+  table: string,
+  id: string,
+  payload: Record<string, unknown>
+): Promise<SyncResult> => {
   if (!isSupabaseConfigured) {
-    return null;
+    return { data: null, error: null };
   }
 
   try {
     const { data, error } = await supabase.from(table).update(payload).eq('id', id).select().single();
-    if (error) throw error;
-    return data;
+    if (error) return { data: null, error: new Error(error.message) };
+    return { data: data as Record<string, unknown>, error: null };
   } catch (error) {
-    console.warn(`[Supabase] update failed for ${table}:`, error);
-    return null;
+    return { data: null, error: error as Error };
   }
 };
 
-export const syncSupabaseDelete = async (table: string, id: string) => {
+export const syncSupabaseDelete = async (table: string, id: string): Promise<SyncResult> => {
   if (!isSupabaseConfigured) {
-    return null;
+    return { data: null, error: null };
   }
 
   try {
     const { error } = await supabase.from(table).delete().eq('id', id);
-    if (error) throw error;
-    return true;
+    if (error) return { data: null, error: new Error(error.message) };
+    return { data: { id }, error: null };
   } catch (error) {
-    console.warn(`[Supabase] delete failed for ${table}:`, error);
-    return null;
+    return { data: null, error: error as Error };
   }
 };
 
