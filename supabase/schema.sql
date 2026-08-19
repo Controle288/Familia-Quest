@@ -213,39 +213,3 @@ for update using (public.is_family_member(family_id)) with check (public.is_fami
 create policy "activity_logs deletable by family members" on public.activity_logs
 for delete using (public.is_family_member(family_id));
 
-create or replace function public.seed_demo_family()
-returns void
-language plpgsql
-security definer
-as $$
-declare
-  family_id text;
-begin
-  if exists (select 1 from public.families limit 1) then
-    return;
-  end if;
-
-  insert into public.families (id, name, invite_code, created_by)
-  values ('fam-silva-01', 'Família Silva', 'SILVA-2024', 'prof-parent-01')
-  returning id into family_id;
-
-  insert into public.profiles (id, family_id, name, full_name, role, avatar_url, title, level, xp, xp_base, xp_to_next_level, balance, streak_days, created_at)
-  values
-    ('prof-parent-01', family_id, 'Pai Carlos', 'Pai Carlos', 'parent', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAm_ZnxZqGSxN7aCmKe8gUASDo9LG_etKr1-fYNyFaBtIlmOC1SQhupXGRTscXR8PcJ6FAoT6jNUrhq6FL2FIzQusDtnQmw5v4bz0e0j_cE245ofRIBr3Ashfkw-B4S1KWKrrkc7Nk28hmcJs_FOmfF6fsfNLnjfyRMMca1fS_2g9uvz8bjMAEMhlMfT9qC4yGY2GYprXTXvxNgxE24reBkL92DFYTIrMKYCzeW7VT4c3E77glIbvz8', 'Guardião da Família', 10, 2500, 2500, 3000, 0, 14, now()),
-    ('prof-child-01', family_id, 'Lucas', 'Lucas', 'child', 'https://lh3.googleusercontent.com/aida-public/AB6AXuB18wys5nYyac2MrozkKprxhinUWPV2o40LYPF802fh24haBQFfluT5h2gX4atGnOlB5PKaWGscXO2j-cR45ZdzmPpwmxHWz5wOOFo9MiBw8rEH-W2Jzg-q9zwOQXc82a_oCHcph0vDplDlNuDhySZClgbE4dN77YXfQqZZ9CqZgoHMys0TA4-n1cImem-xex753SA3pNd2vld3oHwandJHM0ev1sTByTYiR2wt-vva3nDbpPaBthzZ', 'Aventureiro', 5, 450, 0, 500, 45.0, 7, now()),
-    ('prof-child-02', family_id, 'Maria', 'Maria', 'child', 'https://lh3.googleusercontent.com/aida-public/AB6AXuC5Qf8vZ62PdChHjXeYrif-mnbXhSWxW5dGLhkC1b3LzPP0sNZKyQSCnThtt_oImh6F5XRCoItueiIk1tAiIIRg7Ae78gejyehP8uFQ8SjntYfhxl5NZPc8vI6fKiZcC0SRX3ZKoRc8jmn1svJigbFFDUYIeuKLtANyRVvNbJWXQXhpCCqyh_wWrtGqdThVhJZCKbgVhSsbXgZ0PmcwPomubOZhRsbX-yUQBguBuRmwy59AmObyEmzE', 'Exploradora', 4, 320, 0, 400, 30.0, 5, now());
-
-  insert into public.tasks (id, family_id, title, description, category, icon_name, assigned_to, created_by, points, reward_value, reward_type, reward_money, status, submitted_at, created_at)
-  values
-    ('task-01', family_id, 'Limpar o Quarto', 'Arrumar brinquedos, organizar a escrivaninha e passar pano no chão.', 'cleaning', 'cleaning_services', 'prof-child-01', 'prof-parent-01', 50, 50, 'xp_only', 0, 'waiting_approval', 'Há 2 horas', now()),
-    ('task-02', family_id, 'Passear com o Cachorro', 'Volta de 20 minutos pela praça com coleira e saquinhos.', 'pet', 'pets', 'prof-child-02', 'prof-parent-01', 30, 30, 'xp_only', 0, 'waiting_approval', 'Há 4 horas', now()),
-    ('task-03', family_id, 'Lavar a Louça', 'Lavar, secar e guardar os pratos do almoço.', 'kitchen', 'local_dining', 'prof-child-01', 'prof-parent-01', 40, 40, 'xp_only', 0, 'waiting_approval', 'Há 5 horas', now());
-
-  insert into public.rewards (id, family_id, title, description, points_cost, money_cost, category, image_url, is_available, created_at)
-  values
-    ('rew-01', family_id, 'Sorvete no Final de Semana', 'Escolha seu sabor favorito na sorveteria do bairro.', 300, 0, 'food', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAaZIHFQS37oiPujwTQMUSHspf_yIsrpKYyPFlWMR__9xJtI4mmH85_WNDpvDU51LQ0DZ-idh0RQzmMwPisBspDe0pjXHR1nMPneDLGIuNSLAkIdymtlWunp3cpNGZ1bEz-sinX-OZkqS5PpxFIjq1KBb0NssIk-HcjH7nekUsh4ico8nbzkObyXxHMPuNRLv6JEApSeVPr_46g1F5uHYyIVgqDzbbeQy_vy9vW3cAYFZQJBfn1A805', true, now()),
-    ('rew-02', family_id, '30 min de Game', 'Tempo extra para jogar videogame hoje.', 500, 0, 'entertainment', 'https://lh3.googleusercontent.com/aida-public/AB6AXuBMCl48S4QAHGs8QdBNO2GFxi0ZeVz-MQotIKjNC5tHtoORmFWpNu_aObN5MpXr2UAa7q5iTZiWbmecAqPEx6Gkegc032pjfJ7iARSrywQtj_QQacUFq3IFgPJPrZtMiFtI9s_lmx8-G2azo0ymz7iImqYu6jp8koE63b1LqFd8nhPCtWyQl3suwFfHEuttEFr1eX6vvtfdnCt03QYF6uUb9QmTW2rpvIXdfpdO1EcuUYsUegqEg1h7', true, now());
-end;
-$$;
-
-select public.seed_demo_family();

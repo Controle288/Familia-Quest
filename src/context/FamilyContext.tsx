@@ -24,12 +24,6 @@ import {
   ActiveTab,
   ParentSubTab,
 } from '../types';
-import {
-  INITIAL_FAMILY,
-  INITIAL_PROFILES,
-  INITIAL_TASKS,
-  INITIAL_REWARDS,
-} from '../data/mockData';
 
 interface LevelUpInfo {
   profileName: string;
@@ -85,7 +79,6 @@ interface FamilyContextType {
 
   // Family Actions
   copyInviteCode: () => void;
-  resetDemoData: () => void;
   signOut: () => Promise<void>;
   grantAllowance: (profileId: string, amount: number) => Promise<void>;
 }
@@ -93,40 +86,19 @@ interface FamilyContextType {
 const FamilyContext = createContext<FamilyContextType | undefined>(undefined);
 
 export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [family, setFamily] = useState<Family>(() => {
-    const saved = localStorage.getItem('fq_family');
-    return saved ? JSON.parse(saved) : INITIAL_FAMILY;
-  });
+  const [family, setFamily] = useState<Family>(() => ({}) as Family);
 
-  const [profiles, setProfiles] = useState<Profile[]>(() => {
-    const saved = localStorage.getItem('fq_profiles');
-    return saved ? JSON.parse(saved) : INITIAL_PROFILES;
-  });
+  const [profiles, setProfiles] = useState<Profile[]>(() => []);
 
-  const [currentProfileId, setCurrentProfileId] = useState<string>(() => {
-    const saved = localStorage.getItem('fq_current_profile_id');
-    return saved || 'prof-child-01'; // Default to Lucas (Child) for instant excitement
-  });
+  const [currentProfileId, setCurrentProfileId] = useState<string>(() => '');
 
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = localStorage.getItem('fq_tasks');
-    return saved ? JSON.parse(saved) : INITIAL_TASKS;
-  });
+  const [tasks, setTasks] = useState<Task[]>(() => []);
 
-  const [rewards, setRewards] = useState<Reward[]>(() => {
-    const saved = localStorage.getItem('fq_rewards');
-    return saved ? JSON.parse(saved) : INITIAL_REWARDS;
-  });
+  const [rewards, setRewards] = useState<Reward[]>(() => []);
 
-  const [redemptions, setRedemptions] = useState<Redemption[]>(() => {
-    const saved = localStorage.getItem('fq_redemptions');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [redemptions, setRedemptions] = useState<Redemption[]>(() => []);
 
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => {
-    const saved = localStorage.getItem('fq_logs');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => []);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('quest');
   const [parentSubTab, setParentSubTab] = useState<ParentSubTab>('pendentes');
@@ -152,25 +124,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setShowOnboarding(true);
     });
   }, []);
-
-  const isSupabaseSessionActive = isSupabaseConfigured && Boolean(authUser);
-
-  // Sync to local storage only for demo mode. Real Supabase sessions stay source of truth.
-  useEffect(() => {
-    if (isSupabaseSessionActive) {
-      localStorage.setItem('fq_session_mode', 'supabase');
-      return;
-    }
-
-    localStorage.setItem('fq_session_mode', 'demo');
-    localStorage.setItem('fq_family', JSON.stringify(family));
-    localStorage.setItem('fq_profiles', JSON.stringify(profiles));
-    localStorage.setItem('fq_current_profile_id', currentProfileId);
-    localStorage.setItem('fq_tasks', JSON.stringify(tasks));
-    localStorage.setItem('fq_rewards', JSON.stringify(rewards));
-    localStorage.setItem('fq_redemptions', JSON.stringify(redemptions));
-    localStorage.setItem('fq_logs', JSON.stringify(activityLogs));
-  }, [family, profiles, currentProfileId, tasks, rewards, redemptions, activityLogs, isSupabaseSessionActive]);
 
   // Re-fetch the family state from Supabase. Preserves the current profile selection
   // so a live update never yanks the user back to their own profile.
@@ -723,25 +676,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     );
   };
 
-  const resetDemoData = () => {
-    setFamily(INITIAL_FAMILY);
-    setProfiles(INITIAL_PROFILES);
-    setCurrentProfileId('prof-child-01');
-    setTasks(INITIAL_TASKS);
-    setRewards(INITIAL_REWARDS);
-    setRedemptions([]);
-    setActivityLogs([]);
-    localStorage.setItem('fq_session_mode', 'demo');
-    localStorage.setItem('fq_family', JSON.stringify(INITIAL_FAMILY));
-    localStorage.setItem('fq_profiles', JSON.stringify(INITIAL_PROFILES));
-    localStorage.setItem('fq_current_profile_id', 'prof-child-01');
-    localStorage.setItem('fq_tasks', JSON.stringify(INITIAL_TASKS));
-    localStorage.setItem('fq_rewards', JSON.stringify(INITIAL_REWARDS));
-    localStorage.setItem('fq_redemptions', JSON.stringify([]));
-    localStorage.setItem('fq_logs', JSON.stringify([]));
-    addToast('Dados restaurados para o padrão de demonstração.', undefined, 'info');
-  };
-
   const signOut = async () => {
     if (!isSupabaseConfigured) {
       setShowOnboarding(false);
@@ -839,7 +773,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         createReward,
         toggleRewardAvailability,
         copyInviteCode,
-        resetDemoData,
         signOut,
         grantAllowance,
       }}

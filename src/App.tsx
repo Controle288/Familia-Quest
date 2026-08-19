@@ -19,10 +19,16 @@ import { useEffect } from 'react';
 import { initRemoteNavigation } from './utils/remoteNavigation';
 
 const MainAppContent: React.FC = () => {
-  const { activeTab, setActiveTab, currentProfile, showOnboarding, authUser, isSyncing } = useFamily();
+  const { activeTab, setActiveTab, currentProfile, authUser, isSyncing, profiles, family } = useFamily();
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isCreateRewardOpen, setIsCreateRewardOpen] = useState(false);
   const [muted, setMutedState] = useState(isMuted());
+
+  // Official-only: the app is only usable once a family is loaded from the
+  // server. Until then we show the onboarding (create account / join by code).
+  if (!authUser || !family?.id || profiles.length === 0) {
+    return <AuthOnboarding />;
+  }
 
   const toggleMute = () => {
     const next = !muted;
@@ -40,14 +46,6 @@ const MainAppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] dark:bg-slate-950 dark:text-slate-100 flex flex-col antialiased">
       <Header />
-
-      {!authUser && !showOnboarding && (
-        <div className="fixed top-20.5 left-1/2 -translate-x-1/2 z-30 hidden md:block">
-          <div className="rounded-full border border-indigo-200 bg-white/80 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur-sm">
-            Sessão ativa: modo web em tela ampla
-          </div>
-        </div>
-      )}
 
       <div className="flex-1 w-full mx-auto pt-24 pb-24 md:pb-12 px-4 md:px-6 xl:px-8">
         <div className="mx-auto flex w-full max-w-7xl xl:max-w-375 gap-5 xl:gap-7">
@@ -129,7 +127,6 @@ const MainAppContent: React.FC = () => {
         isOpen={isCreateRewardOpen}
         onClose={() => setIsCreateRewardOpen(false)}
       />
-      {showOnboarding && <AuthOnboarding />}
       <ToastContainer />
 
       {isSyncing && (

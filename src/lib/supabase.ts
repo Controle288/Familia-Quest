@@ -155,7 +155,7 @@ export const createFamilyWithProfiles = async (
 
   const { data: family, error: familyError } = await supabase
     .from('families')
-    .insert([{ name: familyName, invite_code: inviteCode, created_by: authUserId || 'demo-user' }])
+    .insert([{ name: familyName, invite_code: inviteCode, created_by: authUserId }])
     .select()
     .single();
 

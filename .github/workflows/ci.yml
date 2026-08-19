@@ -54,7 +54,7 @@ jobs:
         run: npx playwright install-deps webkit
       - name: Start preview server
         run: |
-          nohup npm run preview -- --port 4173 &
+          nohup npx vite preview --port 4173 &
       - name: Wait for preview
         run: |
           for i in {1..30}; do

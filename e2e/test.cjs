@@ -5,84 +5,46 @@ const BROWSER = (process.env.BROWSER || 'chromium');
 
 (async () => {
   console.log('Launching browser:', BROWSER);
-  // webkit rejects the --no-sandbox flag, so only pass it to chromium/firefox.
   const launchArgs = BROWSER === 'webkit' ? [] : ['--no-sandbox'];
   const browser = await playwright[BROWSER].launch({ args: launchArgs });
   const page = await browser.newPage();
+
+  const consoleErrors = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text());
+  });
+  page.on('pageerror', (err) => consoleErrors.push(String(err)));
+
   try {
     console.log('Navigating to', URL);
     await page.goto(URL, { waitUntil: 'networkidle' });
     await page.waitForTimeout(800);
 
-    // Dismiss onboarding (select a profile) if present. Works both with and
-    // without Supabase configured, entering demo navigation.
-    const profileBtn = await page.$('button:has-text("Pai / Mãe")')
-      || await page.$('button:has-text("Filho / Filha")');
-    if (profileBtn) {
-      await profileBtn.click();
-      console.log('dismissed onboarding');
-      await page.waitForTimeout(600);
+    // The official onboarding (create account) must be present.
+    const createBtn = await page.$('button:has-text("Criar Conta e Família")');
+    if (!createBtn) {
+      throw new Error('Onboarding "Criar Conta e Família" not found — demo UI may have leaked.');
+    }
+    console.log('onboarding present');
+
+    const familyInput = await page.$('input[placeholder*="Família"]');
+    const parentInput = await page.$('input[placeholder*="responsável"]');
+    if (!familyInput || !parentInput) {
+      throw new Error('Family/parent name inputs missing from official onboarding.');
+    }
+    console.log('official signup form fields present');
+
+    // Fill the demo-free signup form (does not require a live backend to render).
+    await page.fill('input[type="email"]', 'familia-e2e@example.com');
+    await page.fill('input[type="password"]', 'SenhaForte123');
+    await familyInput.fill('Família E2E');
+    await parentInput.fill('Pai E2E');
+
+    if (consoleErrors.length) {
+      console.error('Console errors detected:', consoleErrors);
+      throw new Error('Console errors present on load: ' + consoleErrors.join(' | '));
     }
 
-    // --- Create a task (parent flow) ---
-    const createSelectors = [
-      'button:has-text("Criar" )',
-      'button:has-text("Criar Tarefa")',
-      'button:has-text("Nova Tarefa")',
-      'button:has-text("Nova Missão")',
-      'text=+ Tarefa',
-      'button:has-text("Adicionar")',
-    ];
-    for (const sel of createSelectors) {
-      try {
-        const el = await page.$(sel);
-        if (el) {
-          await el.click();
-          console.log('opened create modal via', sel);
-          break;
-        }
-      } catch (e) { /* best-effort */ }
-    }
-
-    await page.waitForTimeout(600);
-
-    const titleInput = await page.$('input[placeholder*="Título"], input[placeholder*="tarefa"], input[type="text"]');
-    if (titleInput) {
-      await titleInput.fill('E2E - Lavar a Mesa');
-      console.log('filled title');
-    }
-
-    const xpInput = await page.$('input[type="number"]');
-    if (xpInput) { await xpInput.fill('50'); }
-
-    const submit = await page.$('[data-testid="create-task-submit"]')
-      || await page.$('button:has-text("Salvar e Publicar Missão"), button:has-text("Criar"), button:has-text("Salvar")');
-    if (submit) { await submit.click(); console.log('submitted task'); }
-
-    await page.waitForTimeout(1200);
-
-    // --- Complete a task (child flow) ---
-    const completeBtn = await page.$('[data-testid^="complete-task-"]');
-    if (completeBtn) {
-      await completeBtn.click();
-      console.log('completed a task');
-    } else {
-      const fallback = await page.$('button:has-text("Concluir"), button:has-text("Completar")');
-      if (fallback) { await fallback.click(); console.log('completed (fallback)'); }
-    }
-
-    await page.waitForTimeout(800);
-
-    // --- Approve a task (parent flow) if present ---
-    const approve = await page.$('[data-testid^="approve-task-"]')
-      || await page.$('button:has-text("Aprovar"), button:has-text("Aceitar")');
-    if (approve) { await approve.click(); console.log('approved'); }
-
-    // --- Redeem a reward if affordable ---
-    const redeem = await page.$('[data-testid^="redeem-reward-"]:not([disabled])');
-    if (redeem) { await redeem.click(); console.log('redeemed a reward'); }
-
-    await page.waitForTimeout(800);
     await page.screenshot({ path: 'e2e_ci_result.png' });
     await browser.close();
     console.log('E2E finished successfully');
