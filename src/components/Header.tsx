@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Flame, ChevronDown, Check, UserCheck, Sparkles, RefreshCw, Compass } from 'lucide-react';
+import { Bell, Flame, ChevronDown, Check, UserCheck, Sparkles, RefreshCw, Compass, LogOut } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 
 export const Header: React.FC = () => {
@@ -11,6 +11,8 @@ export const Header: React.FC = () => {
     tasks, 
     setShowOnboarding, 
     resetDemoData,
+    signOut,
+    isAuthenticated,
     addToast 
   } = useFamily();
 
@@ -21,7 +23,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 w-full h-[68px] bg-[#f8f9ff]/90 backdrop-blur-md z-40 border-b border-indigo-100/60 transition-all">
-      <div className="max-w-5xl mx-auto h-full px-4 md:px-6 flex justify-between items-center">
+      <div className="max-w-[1600px] mx-auto h-full px-4 md:px-6 xl:px-8 flex justify-between items-center">
         {/* Left: Avatar & Family Name */}
         <div className="flex items-center gap-3">
           <button
@@ -65,7 +67,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Center / Quick Role Toggle for Testing */}
-        <div className="flex items-center bg-indigo-50/90 p-1 rounded-full border border-indigo-100/80 shadow-xs">
+        <div className="hidden xl:flex items-center bg-indigo-50/90 p-1 rounded-full border border-indigo-100/80 shadow-xs">
           {profiles.map((p) => {
             const isSelected = p.id === currentProfile.id;
             return (
@@ -82,6 +84,11 @@ export const Header: React.FC = () => {
               </button>
             );
           })}
+        </div>
+
+        <div className="hidden md:flex items-center gap-2 rounded-full border border-indigo-100 bg-white/70 px-3 py-1.5 shadow-sm">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Status</span>
+          <span className="text-xs font-semibold text-slate-700">{currentProfile.role === 'parent' ? 'Aprovação' : 'Progressão'}</span>
         </div>
 
         {/* Right: Streak & Notifications */}
@@ -169,6 +176,18 @@ export const Header: React.FC = () => {
                 <RefreshCw className="w-3 h-3" /> Resetar Dados
               </button>
             </div>
+
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  signOut();
+                }}
+                className="w-full mb-3 p-2.5 rounded-2xl flex items-center justify-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-sm transition-all"
+              >
+                <LogOut className="w-4 h-4" /> Sair da Conta
+              </button>
+            )}
 
             <div className="space-y-2">
               {profiles.map((p) => {

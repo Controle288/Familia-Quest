@@ -28,7 +28,6 @@ export interface Profile {
   title?: string;
   level: number;
   xp: number;
-  points: number;
   xp_to_next_level: number;
   balance: number;
   streak_days: number;

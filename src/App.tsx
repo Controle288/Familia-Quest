@@ -14,39 +14,86 @@ import { AuthOnboarding } from './components/AuthOnboarding';
 import { ToastContainer } from './components/ToastContainer';
 
 const MainAppContent: React.FC = () => {
-  const { activeTab, setActiveTab, currentProfile, showOnboarding } = useFamily();
+  const { activeTab, setActiveTab, currentProfile, showOnboarding, authUser } = useFamily();
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isCreateRewardOpen, setIsCreateRewardOpen] = useState(false);
 
+  const desktopTabs = [
+    { id: 'quest' as const, label: 'Quest' },
+    { id: 'shop' as const, label: 'Shop' },
+    { id: 'social' as const, label: 'Social' },
+    { id: 'stats' as const, label: 'Stats' },
+  ];
+
   return (
     <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] flex flex-col antialiased">
-      {/* Top Header */}
       <Header />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 md:px-6 pt-24 pb-24 md:pb-12">
-        {activeTab === 'quest' && (
-          <>
-            {currentProfile.role === 'parent' ? (
-              <ParentDashboard
-                onOpenCreateTask={() => setIsCreateTaskOpen(true)}
-                onOpenCreateReward={() => setIsCreateRewardOpen(true)}
-              />
-            ) : (
-              <ChildDashboard onGoToShop={() => setActiveTab('shop')} />
+      {!authUser && !showOnboarding && (
+        <div className="fixed top-[82px] left-1/2 -translate-x-1/2 z-30 hidden md:block">
+          <div className="rounded-full border border-indigo-200 bg-white/80 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur-sm">
+            Sessão ativa: modo web em tela ampla
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 w-full mx-auto pt-24 pb-24 md:pb-12 px-4 md:px-6 xl:px-8">
+        <div className="mx-auto flex w-full max-w-7xl xl:max-w-[1500px] gap-5 xl:gap-7">
+          <aside className="hidden lg:flex w-72 shrink-0 flex-col rounded-3xl border border-indigo-100 bg-white/80 p-4 shadow-[0px_10px_30px_rgba(79,70,229,0.08)] backdrop-blur-sm">
+            <div className="mb-5 px-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Menu</p>
+              <h2 className="mt-2 font-heading text-xl font-bold text-slate-900">Família</h2>
+            </div>
+
+            <nav className="space-y-2">
+              {desktopTabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition-all ${
+                      isActive
+                        ? 'bg-[#3525cd] text-white shadow-md shadow-indigo-500/20'
+                        : 'text-slate-600 hover:bg-indigo-50 hover:text-[#3525cd]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="mt-auto rounded-2xl bg-gradient-to-br from-[#4f46e5] to-[#8455ef] p-4 text-white shadow-lg shadow-indigo-500/20">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-100">Perfil</p>
+              <p className="mt-2 font-heading text-lg font-bold">{currentProfile.full_name}</p>
+              <p className="text-xs text-indigo-100">{currentProfile.role === 'parent' ? 'Pai/Mãe' : 'Filho/Filha'}</p>
+            </div>
+          </aside>
+
+          <main className="flex-1 w-full">
+            {activeTab === 'quest' && (
+              <>
+                {currentProfile.role === 'parent' ? (
+                  <ParentDashboard
+                    onOpenCreateTask={() => setIsCreateTaskOpen(true)}
+                    onOpenCreateReward={() => setIsCreateRewardOpen(true)}
+                  />
+                ) : (
+                  <ChildDashboard onGoToShop={() => setActiveTab('shop')} />
+                )}
+              </>
             )}
-          </>
-        )}
 
-        {activeTab === 'shop' && <RewardStore />}
-        {activeTab === 'social' && <SocialTab />}
-        {activeTab === 'stats' && <StatsTab />}
-      </main>
+            {activeTab === 'shop' && <RewardStore />}
+            {activeTab === 'social' && <SocialTab />}
+            {activeTab === 'stats' && <StatsTab />}
+          </main>
+        </div>
+      </div>
 
-      {/* Bottom PWA Navigation for Mobile */}
       <BottomNav />
 
-      {/* Global Modals & Toasts */}
       <LevelUpModal />
       <CreateTaskModal
         isOpen={isCreateTaskOpen}

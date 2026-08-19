@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Sparkles, DollarSign, Check, Brush, Bed, BookOpen, Dog, Utensils, Trash2, Heart } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { TaskCategory, RewardType } from '../types';
@@ -21,6 +21,18 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   const [rewardValue, setRewardValue] = useState(50);
   const [rewardMoney, setRewardMoney] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!childrenProfiles.length) {
+      setAssignedTo('');
+      return;
+    }
+
+    const hasValidSelection = childrenProfiles.some((child) => child.id === assignedTo);
+    if (!hasValidSelection) {
+      setAssignedTo(childrenProfiles[0].id);
+    }
+  }, [childrenProfiles, assignedTo]);
 
   if (!isOpen) return null;
 
