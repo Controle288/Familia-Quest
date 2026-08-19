@@ -50,7 +50,7 @@ const MainAppContent: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] dark:bg-slate-950 dark:text-slate-100 flex flex-col antialiased">
+      <div className="min-h-screen text-[#0b1c30] dark:text-slate-100 flex flex-col antialiased">
       <Header />
 
       <div className="flex-1 w-full mx-auto pt-24 pb-24 md:pb-12 px-4 md:px-6 xl:px-8">

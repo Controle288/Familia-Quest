@@ -839,7 +839,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isSyncing,
         familySettings,
         isAdminUser,
-        isPremium: familySettings?.plan === 'premium',
+        isPremium: isAdminUser || familySettings?.plan === 'premium',
         updateFamilySettings,
         setActiveTab,
         setParentSubTab,
