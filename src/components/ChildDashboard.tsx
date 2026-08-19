@@ -16,6 +16,7 @@ import {
 import { useFamily } from '../context/FamilyContext';
 import { TaskIcon } from './TaskIcon';
 import { BadgeShelf } from './BadgeShelf';
+import { MotionItem } from './motion';
 import { uploadTaskProof, isSupabaseConfigured } from '../lib/supabase';
 
 interface ChildDashboardProps {
@@ -210,7 +211,7 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
             const isSubmitting = submittingTaskId === task.id;
 
             return (
-              <div
+              <MotionItem
                 key={task.id}
                 className="bg-white rounded-2xl p-4 shadow-[0px_4px_20px_rgba(79,70,229,0.06)] border border-slate-100 flex items-center justify-between gap-3 hover:-translate-y-0.5 hover:shadow-md transition-all group"
               >
@@ -286,13 +287,13 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
                     <Check className="w-5 h-5 stroke-[2.5px]" />
                   </button>
                 </div>
-              </div>
+            </MotionItem>
             );
           })}
 
           {/* Waiting for Approval Tasks */}
           {waitingApprovalTasks.map((task) => (
-            <div
+            <MotionItem
               key={task.id}
               className="bg-[#eff4ff] rounded-2xl p-4 border border-indigo-100 flex items-center justify-between gap-3 opacity-90"
             >
@@ -315,12 +316,12 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
               <div className="w-12 h-12 rounded-full bg-[#3525cd] text-white flex items-center justify-center shrink-0 shadow-sm cursor-default">
                 <Check className="w-5 h-5 stroke-[3px]" />
               </div>
-            </div>
+            </MotionItem>
           ))}
 
           {/* Completed Tasks of Today */}
           {completedTasks.map((task) => (
-            <div
+            <MotionItem
               key={task.id}
               className="bg-emerald-50/60 rounded-2xl p-4 border border-emerald-100 flex items-center justify-between gap-3 opacity-80"
             >
@@ -342,7 +343,7 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
               <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
                 <CheckCircle className="w-5 h-5" />
               </div>
-            </div>
+            </MotionItem>
           ))}
 
           {childTasks.length === 0 && (
@@ -350,7 +351,7 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
               <Award className="w-12 h-12 text-indigo-400 mx-auto mb-2" />
               <p className="font-heading font-bold text-slate-800">Nenhuma missão atribuída no momento!</p>
               <p className="text-xs text-slate-500 mt-1">Peça aos seus pais para adicionar novas missões para ganhar XP.</p>
-            </div>
+          </div>
           )}
         </div>
       </section>

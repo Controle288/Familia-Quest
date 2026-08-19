@@ -18,6 +18,7 @@ import {
 import { useFamily } from '../context/FamilyContext';
 import { TaskIcon } from './TaskIcon';
 import { ParentSubTab } from '../types';
+import { MotionItem } from './motion';
 
 interface ParentDashboardProps {
   onOpenCreateTask: () => void;
@@ -247,7 +248,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
                 const isLoading = loadingTaskId === task.id;
 
                 return (
-                  <div
+                  <MotionItem
                     key={task.id}
                     className="bg-[#f8f9ff] border border-slate-200/80 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:shadow-md transition-all"
                   >
@@ -305,7 +306,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
                         {isLoading ? 'Aprovando...' : 'Aprovar'}
                       </button>
                     </div>
-                  </div>
+                  </MotionItem>
                 );
               })
             )}
@@ -426,7 +427,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
               {filteredManageTasks.map((task) => {
                 const child = profiles.find((p) => p.id === task.assigned_to);
                 return (
-                  <div
+                  <MotionItem
                     key={task.id}
                     className="p-4 rounded-xl border border-slate-100 bg-white hover:border-indigo-100 flex items-center justify-between gap-3 shadow-2xs"
                   >
@@ -466,7 +467,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
                     >
                       <X className="w-4 h-4" />
                     </button>
-                  </div>
+                  </MotionItem>
                 );
               })}
             </div>

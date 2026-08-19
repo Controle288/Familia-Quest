@@ -23,13 +23,20 @@ export const MotionList: React.FC<{ children: React.ReactNode; className?: strin
   </motion.div>
 );
 
-/** Animated list row. Keep `key` on this element when mapping. */
+/** Animated list row. Keep `key` on this element when mapping. Works both as a
+ *  staggered child of <MotionList> and standalone (carries its own initial/animate). */
 export const MotionItem: React.FC<{ children: React.ReactNode; className?: string; layout?: boolean }> = ({
   children,
   className,
   layout = true,
 }) => (
-  <motion.div className={className} variants={itemVariants} layout={layout}>
+  <motion.div
+    className={className}
+    variants={itemVariants}
+    initial="hidden"
+    animate="show"
+    layout={layout}
+  >
     {children}
   </motion.div>
 );
