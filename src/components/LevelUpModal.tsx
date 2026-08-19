@@ -21,7 +21,7 @@ export const LevelUpModal: React.FC = () => {
         {/* Celebration Text */}
         <div className="space-y-1 mb-3">
           <h2 className="text-3xl font-heading font-extrabold text-[#3525cd] tracking-wider uppercase">
-            LEVEL UP!
+            SUBIU DE NÍVEL!
           </h2>
           <p className="text-lg font-heading font-bold text-slate-800">
             {levelUpModal.profileName} atingiu o{' '}

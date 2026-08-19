@@ -150,7 +150,7 @@ export const createFamilyWithProfiles = async (
     .single();
 
   if (familyError || !family) {
-    throw familyError || new Error('Failed to create family');
+    throw familyError || new Error('Falha ao criar a família');
   }
 
   const preparedProfiles = profiles.map((profile) => ({
