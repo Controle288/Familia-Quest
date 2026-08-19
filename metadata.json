@@ -1,0 +1,6 @@
+{
+  "name": "FamilyQuest - Chore Tracker & Gamificação",
+  "description": "Aplicativo de gerenciamento de tarefas familiares e gamificação com painel para pais e filhos, recompensas, níveis e aprovação de missões.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
