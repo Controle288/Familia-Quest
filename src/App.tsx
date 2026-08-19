@@ -12,6 +12,8 @@ import { CreateTaskModal } from './components/CreateTaskModal';
 import { CreateRewardModal } from './components/CreateRewardModal';
 import { AuthOnboarding } from './components/AuthOnboarding';
 import { ToastContainer } from './components/ToastContainer';
+import { useEffect } from 'react';
+import { initRemoteNavigation } from './utils/remoteNavigation';
 
 const MainAppContent: React.FC = () => {
   const { activeTab, setActiveTab, currentProfile, showOnboarding, authUser } = useFamily();
@@ -110,6 +112,11 @@ const MainAppContent: React.FC = () => {
 };
 
 export default function App() {
+  useEffect(() => {
+    const stop = initRemoteNavigation();
+    return () => stop && stop();
+  }, []);
+
   return (
     <FamilyProvider>
       <MainAppContent />

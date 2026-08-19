@@ -83,3 +83,13 @@
 ::-webkit-scrollbar-thumb:hover {
   background-color: #b0c9f8;
 }
+
+/* Focus styles for TV/remote keyboard navigation */
+button:focus, a:focus, [role="button"]:focus, input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(69, 56, 153, 0.18), 0 0 0 1px rgba(53,37,205,0.9);
+  border-radius: 10px;
+}
+
+/* Make focus visible for keyboard/remote users */
+:focus:not(:focus-visible) { box-shadow: none; }
