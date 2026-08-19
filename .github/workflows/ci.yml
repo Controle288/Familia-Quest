@@ -49,6 +49,9 @@ jobs:
         run: npm install
       - name: Install Playwright browsers
         run: npx playwright install
+      - name: Install WebKit system dependencies
+        if: matrix.browser == 'webkit'
+        run: npx playwright install-deps webkit
       - name: Start preview server
         run: |
           nohup npm run preview -- --port 4173 &
