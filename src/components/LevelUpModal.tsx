@@ -13,7 +13,7 @@ export const LevelUpModal: React.FC = () => {
         {/* Animated Glow Star Icon */}
         <div className="relative w-28 h-28 flex items-center justify-center mb-4">
           <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-xl animate-pulse-subtle" />
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#3525cd] via-[#4f46e5] to-[#8455ef] flex items-center justify-center text-white shadow-xl animate-float">
+          <div className="w-24 h-24 rounded-full bg-linear-to-tr from-[#3525cd] via-[#4f46e5] to-[#8455ef] flex items-center justify-center text-white shadow-xl animate-float">
             <Star className="w-12 h-12 fill-[#ffc107] text-[#ffc107]" />
           </div>
         </div>

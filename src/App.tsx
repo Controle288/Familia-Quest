@@ -19,10 +19,10 @@ const MainAppContent: React.FC = () => {
   const [isCreateRewardOpen, setIsCreateRewardOpen] = useState(false);
 
   const desktopTabs = [
-    { id: 'quest' as const, label: 'Quest' },
-    { id: 'shop' as const, label: 'Shop' },
+    { id: 'quest' as const, label: 'Missões' },
+    { id: 'shop' as const, label: 'Loja' },
     { id: 'social' as const, label: 'Social' },
-    { id: 'stats' as const, label: 'Stats' },
+    { id: 'stats' as const, label: 'Estatísticas' },
   ];
 
   return (
@@ -30,7 +30,7 @@ const MainAppContent: React.FC = () => {
       <Header />
 
       {!authUser && !showOnboarding && (
-        <div className="fixed top-[82px] left-1/2 -translate-x-1/2 z-30 hidden md:block">
+        <div className="fixed top-20.5 left-1/2 -translate-x-1/2 z-30 hidden md:block">
           <div className="rounded-full border border-indigo-200 bg-white/80 px-4 py-2 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur-sm">
             Sessão ativa: modo web em tela ampla
           </div>
@@ -38,7 +38,7 @@ const MainAppContent: React.FC = () => {
       )}
 
       <div className="flex-1 w-full mx-auto pt-24 pb-24 md:pb-12 px-4 md:px-6 xl:px-8">
-        <div className="mx-auto flex w-full max-w-7xl xl:max-w-[1500px] gap-5 xl:gap-7">
+        <div className="mx-auto flex w-full max-w-7xl xl:max-w-375 gap-5 xl:gap-7">
           <aside className="hidden lg:flex w-72 shrink-0 flex-col rounded-3xl border border-indigo-100 bg-white/80 p-4 shadow-[0px_10px_30px_rgba(79,70,229,0.08)] backdrop-blur-sm">
             <div className="mb-5 px-2">
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Menu</p>
@@ -64,7 +64,7 @@ const MainAppContent: React.FC = () => {
               })}
             </nav>
 
-            <div className="mt-auto rounded-2xl bg-gradient-to-br from-[#4f46e5] to-[#8455ef] p-4 text-white shadow-lg shadow-indigo-500/20">
+            <div className="mt-auto rounded-2xl bg-linear-to-br from-[#4f46e5] to-[#8455ef] p-4 text-white shadow-lg shadow-indigo-500/20">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-100">Perfil</p>
               <p className="mt-2 font-heading text-lg font-bold">{currentProfile.full_name}</p>
               <p className="text-xs text-indigo-100">{currentProfile.role === 'parent' ? 'Pai/Mãe' : 'Filho/Filha'}</p>
