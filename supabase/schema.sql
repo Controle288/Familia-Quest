@@ -113,6 +113,34 @@ as $$
   );
 $$;
 
+-- Is the authenticated user a PARENT in the given family?
+create or replace function public.is_parent(check_family_id text)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.family_id = check_family_id
+      and p.user_id = auth.uid()::text
+      and p.role = 'parent'
+  );
+$$;
+
+-- The id of the authenticated user's own profile in the given family (or null).
+create or replace function public.my_profile_id(check_family_id text)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select p.id from public.profiles p
+  where p.family_id = check_family_id
+    and p.user_id = auth.uid()::text
+  limit 1;
+$$;
+
 create policy "families readable by authenticated" on public.families
 for select using (auth.uid() is not null);
 
@@ -131,17 +159,17 @@ for select using (user_id = auth.uid()::text or public.is_family_member(family_i
 create policy "profiles insertable by self" on public.profiles
 for insert with check (user_id = auth.uid()::text);
 
-create policy "profiles updatable by self or family" on public.profiles
-for update using (user_id = auth.uid()::text or public.is_family_member(family_id)) with check (user_id = auth.uid()::text or public.is_family_member(family_id));
+create policy "profiles updatable by self or parent" on public.profiles
+for update using (user_id = auth.uid()::text or public.is_parent(family_id)) with check (user_id = auth.uid()::text or public.is_parent(family_id));
 
-create policy "profiles deletable by self or family" on public.profiles
-for delete using (user_id = auth.uid()::text or public.is_family_member(family_id));
+create policy "profiles deletable by parent" on public.profiles
+for delete using (public.is_parent(family_id));
 
 create policy "tasks scoped to family" on public.tasks
 for select using (public.is_family_member(family_id));
 
 create policy "tasks writable by family members" on public.tasks
-for insert with check (public.is_family_member(family_id));
+for insert with check (public.is_family_member(family_id) and (public.is_parent(family_id) or assigned_to = public.my_profile_id(family_id)));
 
 create policy "tasks updateable by family members" on public.tasks
 for update using (public.is_family_member(family_id)) with check (public.is_family_member(family_id));
@@ -165,7 +193,7 @@ create policy "redemptions scoped to family" on public.redemptions
 for select using (public.is_family_member(family_id));
 
 create policy "redemptions writable by family members" on public.redemptions
-for insert with check (public.is_family_member(family_id));
+for insert with check (public.is_family_member(family_id) and (public.is_parent(family_id) or profile_id = public.my_profile_id(family_id)));
 
 create policy "redemptions updateable by family members" on public.redemptions
 for update using (public.is_family_member(family_id)) with check (public.is_family_member(family_id));
