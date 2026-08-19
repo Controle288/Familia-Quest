@@ -5,7 +5,9 @@ const BROWSER = (process.env.BROWSER || 'chromium');
 
 (async () => {
   console.log('Launching browser:', BROWSER);
-  const browser = await playwright[BROWSER].launch({ args: ['--no-sandbox'] });
+  // webkit rejects the --no-sandbox flag, so only pass it to chromium/firefox.
+  const launchArgs = BROWSER === 'webkit' ? [] : ['--no-sandbox'];
+  const browser = await playwright[BROWSER].launch({ args: launchArgs });
   const page = await browser.newPage();
   try {
     console.log('Navigating to', URL);
