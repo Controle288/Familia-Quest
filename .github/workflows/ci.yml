@@ -31,6 +31,9 @@ jobs:
   e2e:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js
@@ -52,4 +55,5 @@ jobs:
       - name: Run E2E tests
         env:
           E2E_URL: http://localhost:4173
+          BROWSER: ${{ matrix.browser }}
         run: npm run test:e2e

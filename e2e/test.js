@@ -1,9 +1,11 @@
-const { chromium } = require('playwright');
+const playwright = require('playwright');
 
 const URL = process.env.E2E_URL || 'http://localhost:4173';
+const BROWSER = (process.env.BROWSER || 'chromium');
 
 (async () => {
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  console.log('Launching browser:', BROWSER);
+  const browser = await playwright[BROWSER].launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage();
   try {
     console.log('Navigating to', URL);
