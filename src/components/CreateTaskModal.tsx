@@ -228,11 +228,12 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
 
           {/* Submit */}
           <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-12 rounded-full bg-[#3525cd] text-white font-heading font-bold text-sm hover:bg-[#2e1fb5] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
-            >
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                data-testid="create-task-submit"
+                className="w-full h-12 rounded-full bg-[#3525cd] text-white font-heading font-bold text-sm hover:bg-[#2e1fb5] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+              >
               <Check className="w-4 h-4" />
               {isSubmitting ? 'Criando Missão...' : 'Salvar e Publicar Missão'}
             </button>

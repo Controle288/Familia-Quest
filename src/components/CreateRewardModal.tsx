@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Image as ImageIcon, Check } from 'lucide-react';
+import { X, Sparkles, DollarSign, Image as ImageIcon, Check } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { RewardCategory } from '../types';
 
@@ -14,6 +14,7 @@ export const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ isOpen, on
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [pointsCost, setPointsCost] = useState(300);
+  const [moneyCost, setMoneyCost] = useState(0);
   const [category, setCategory] = useState<RewardCategory>('entertainment');
   const [imageUrl, setImageUrl] = useState(
     'https://lh3.googleusercontent.com/aida-public/AB6AXuAaZIHFQS37oiPujwTQMUSHspf_yIsrpKYyPFlWMR__9xJtI4mmH85_WNDpvDU51LQ0DZ-idh0RQzmMwPisBspDe0pjXHR1nMPneDLGIuNSLAkIdymtlWunp3cpNGZ1bEz-sinX-OZkqS5PpxFIjq1KBb0NssIk-HcjH7nekUsh4ico8nbzkObyXxHMPuNRLv6JEApSeVPr_46g1F5uHYyIVgqDzbbeQy_vy9vW3cAYFZQJBfn1A805'
@@ -47,6 +48,7 @@ export const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ isOpen, on
         title: title.trim(),
         description: description.trim(),
         points_cost: Number(pointsCost) || 300,
+        money_cost: Number(moneyCost) || 0,
         category,
         image_url: imageUrl,
         is_available: true,
@@ -55,6 +57,7 @@ export const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ isOpen, on
       setTitle('');
       setDescription('');
       setPointsCost(300);
+      setMoneyCost(0);
     } finally {
       setIsSubmitting(false);
     }
@@ -95,21 +98,42 @@ export const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ isOpen, on
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Custo em Pontos (XP) *
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                min="50"
-                max="10000"
-                step="50"
-                value={pointsCost}
-                onChange={(e) => setPointsCost(Number(e.target.value))}
-                className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-[#006e4b]"
-              />
-              <Sparkles className="w-4 h-4 text-emerald-600 absolute left-2.5 top-3" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Custo em Pontos (XP) *
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="50"
+                  max="10000"
+                  step="50"
+                  value={pointsCost}
+                  onChange={(e) => setPointsCost(Number(e.target.value))}
+                  className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-[#006e4b]"
+                />
+                <Sparkles className="w-4 h-4 text-emerald-600 absolute left-2.5 top-3" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Custo em R$ (opcional)
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  max="1000"
+                  step="0.5"
+                  value={moneyCost}
+                  onChange={(e) => setMoneyCost(Number(e.target.value))}
+                  placeholder="0,00"
+                  className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-[#005338]"
+                />
+                <DollarSign className="w-4 h-4 text-emerald-600 absolute left-2.5 top-3" />
+              </div>
             </div>
           </div>
 

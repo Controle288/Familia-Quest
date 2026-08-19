@@ -101,9 +101,18 @@ export const RewardStore: React.FC = () => {
         {/* Rewards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {filteredRewards.map((reward) => {
-            const canAfford = currentProfile.xp >= reward.points_cost;
+            const moneyNeeded = reward.money_cost || 0;
+            const canAffordXp = reward.points_cost === 0 || currentProfile.xp >= reward.points_cost;
+            const canAffordMoney = moneyNeeded === 0 || currentProfile.balance >= moneyNeeded;
+            const canAfford = canAffordXp && canAffordMoney;
             const pointsDifference = reward.points_cost - currentProfile.xp;
-            const progressPercent = Math.min(100, Math.round((currentProfile.xp / reward.points_cost) * 100));
+            const moneyDifference = moneyNeeded - currentProfile.balance;
+            const xpProgressPercent = reward.points_cost > 0
+              ? Math.min(100, Math.round((currentProfile.xp / reward.points_cost) * 100))
+              : 100;
+            const moneyProgressPercent = moneyNeeded > 0
+              ? Math.min(100, Math.round((currentProfile.balance / moneyNeeded) * 100))
+              : 100;
             const isRedeeming = redeemingId === reward.id;
 
             return (
@@ -124,15 +133,24 @@ export const RewardStore: React.FC = () => {
                       canAfford ? 'group-hover:scale-105' : 'grayscale-[25%]'
                     }`}
                   />
-                  <div
-                    className={`absolute top-3 right-3 px-3 py-1 rounded-full flex items-center gap-1 shadow-sm backdrop-blur-md text-xs font-bold ${
-                      canAfford
-                        ? 'bg-white/90 text-[#006e4b]'
-                        : 'bg-slate-900/70 text-slate-200'
-                    }`}
-                  >
-                    <Sparkles className="w-3.5 h-3.5 fill-current" />
-                    <span>{reward.points_cost.toLocaleString('pt-BR')}</span>
+                  <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+                    <div
+                      className={`px-3 py-1 rounded-full flex items-center gap-1 shadow-sm backdrop-blur-md text-xs font-bold ${
+                        canAffordXp ? 'bg-white/90 text-[#006e4b]' : 'bg-slate-900/70 text-slate-200'
+                      }`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5 fill-current" />
+                      <span>{reward.points_cost.toLocaleString('pt-BR')} XP</span>
+                    </div>
+                    {moneyNeeded > 0 && (
+                      <div
+                        className={`px-3 py-1 rounded-full flex items-center gap-1 shadow-sm backdrop-blur-md text-xs font-bold ${
+                          canAffordMoney ? 'bg-white/90 text-[#005338]' : 'bg-slate-900/70 text-slate-200'
+                        }`}
+                      >
+                        <span>R$ {moneyNeeded.toFixed(2)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -147,46 +165,73 @@ export const RewardStore: React.FC = () => {
                     </p>
                   </div>
 
-                  <div>
-                    {/* Progress indicator */}
-                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-1.5">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          canAfford ? 'bg-[#006e4b] w-full' : 'bg-[#8455ef]'
-                        }`}
-                        style={{ width: canAfford ? '100%' : `${progressPercent}%` }}
-                      />
+                  <div className="space-y-1.5">
+                    {/* XP progress */}
+                    <div>
+                      <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-0.5">
+                        <span>XP</span>
+                        <span>{Math.min(100, xpProgressPercent)}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            canAffordXp ? 'bg-[#006e4b]' : 'bg-[#8455ef]'
+                          }`}
+                          style={{ width: `${xpProgressPercent}%` }}
+                        />
+                      </div>
                     </div>
+
+                    {/* Money progress */}
+                    {moneyNeeded > 0 && (
+                      <div>
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-0.5">
+                          <span>Saldo R$</span>
+                          <span>{Math.min(100, moneyProgressPercent)}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              canAffordMoney ? 'bg-[#005338]' : 'bg-emerald-400'
+                            }`}
+                            style={{ width: `${moneyProgressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {!canAfford && (
                       <p className="text-[11px] text-slate-400 text-right font-medium">
-                        Faltam {pointsDifference} pontos
+                        {!canAffordXp && `Faltam ${pointsDifference} XP`}
+                        {!canAffordXp && !canAffordMoney && ' • '}
+                        {!canAffordMoney && `Faltam R$ ${moneyDifference.toFixed(2)}`}
                       </p>
                     )}
-
-                    {/* Action Button */}
-                    <button
-                      onClick={() => handleRedeem(reward.id)}
-                      disabled={!canAfford || isRedeeming}
-                      className={`w-full h-11 rounded-full font-heading font-bold text-xs md:text-sm mt-3 flex items-center justify-center gap-1.5 transition-all ${
-                        canAfford
-                          ? 'bg-[#3525cd] text-white hover:bg-[#2e1fb5] shadow-md shadow-indigo-500/20 active:scale-95'
-                          : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                      }`}
-                    >
-                      {canAfford ? (
-                        <>
-                          <Gift className="w-4 h-4" />
-                          {isRedeeming ? 'Resgatando...' : 'Resgatar'}
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="w-4 h-4" />
-                          Bloqueado
-                        </>
-                      )}
-                    </button>
                   </div>
+
+                  {/* Action Button */}
+                  <button
+                    onClick={() => handleRedeem(reward.id)}
+                    disabled={!canAfford || isRedeeming}
+                    data-testid={`redeem-reward-${reward.id}`}
+                    className={`w-full h-11 rounded-full font-heading font-bold text-xs md:text-sm mt-3 flex items-center justify-center gap-1.5 transition-all ${
+                      canAfford
+                        ? 'bg-[#3525cd] text-white hover:bg-[#2e1fb5] shadow-md shadow-indigo-500/20 active:scale-95'
+                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {canAfford ? (
+                      <>
+                        <Gift className="w-4 h-4" />
+                        {isRedeeming ? 'Resgatando...' : 'Resgatar'}
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        Bloqueado
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             );

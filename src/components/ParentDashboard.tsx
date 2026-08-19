@@ -287,6 +287,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
                       <button
                         onClick={() => handleApprove(task.id)}
                         disabled={isLoading}
+                        data-testid={`approve-task-${task.id}`}
                         className="flex-1 md:flex-none h-11 px-6 rounded-full bg-[#3525cd] text-white hover:bg-[#2e1fb5] font-semibold text-xs md:text-sm flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95"
                       >
                         <Check className="w-4 h-4 stroke-[3px]" />

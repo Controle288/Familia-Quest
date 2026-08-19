@@ -28,10 +28,12 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
   const waitingApprovalTasks = childTasks.filter((t) => t.status === 'waiting_approval');
   const completedTasks = childTasks.filter((t) => t.status === 'completed');
 
-  // XP calculation
+  // XP calculation (progress within the current level using xp_base)
   const xpCurrent = currentProfile.xp;
+  const xpBase = currentProfile.xp_base || 0;
   const xpTarget = currentProfile.xp_to_next_level || 500;
-  const xpPercent = Math.min(100, Math.round((xpCurrent / xpTarget) * 100));
+  const xpSpan = Math.max(1, xpTarget - xpBase);
+  const xpPercent = Math.min(100, Math.round(((xpCurrent - xpBase) / xpSpan) * 100));
 
   // Next reward goal (first reward in list or customized)
   const nextReward = rewards[1] || rewards[0] || {
@@ -75,7 +77,7 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
                   {currentProfile.xp} XP
                 </span>
                 <span className="text-xs text-slate-500 font-medium">
-                  / {xpTarget} XP para o Nível {currentProfile.level + 1}
+                  / {xpTarget - xpBase} XP para o Nível {currentProfile.level + 1}
                 </span>
               </div>
             </div>
@@ -207,6 +209,7 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
                 <button
                   onClick={() => handleComplete(task.id)}
                   disabled={isSubmitting}
+                  data-testid={`complete-task-${task.id}`}
                   className="w-12 h-12 rounded-full border-2 border-slate-200 text-slate-400 hover:border-[#3525cd] hover:text-[#3525cd] hover:bg-indigo-50 flex items-center justify-center shrink-0 transition-all active:scale-95 shadow-xs"
                   title="Concluir Tarefa"
                 >
