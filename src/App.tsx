@@ -117,6 +117,16 @@ export default function App() {
     return () => stop && stop();
   }, []);
 
+  useEffect(() => {
+    // Detect TV-like environment: Android TV / large screen
+    const ua = navigator.userAgent || '';
+    const isAndroidTV = /Android TV|GoogleTV|SmartTV|Smart-TV|TV/i.test(ua);
+    const largeScreen = (window.screen && Math.max(window.screen.width, window.screen.height) >= 1000);
+    if (isAndroidTV || largeScreen) {
+      document.body.classList.add('tv-mode');
+    }
+  }, []);
+
   return (
     <FamilyProvider>
       <MainAppContent />

@@ -93,3 +93,24 @@ button:focus, a:focus, [role="button"]:focus, input:focus, select:focus, textare
 
 /* Make focus visible for keyboard/remote users */
 :focus:not(:focus-visible) { box-shadow: none; }
+
+/* TV friendly layout tweaks when body has .tv-mode */
+body.tv-mode {
+  --tv-scale: 1.12;
+}
+
+body.tv-mode button, body.tv-mode a, body.tv-mode [role="button"] {
+  padding: calc(0.75rem * var(--tv-scale));
+  font-size: calc(1rem * var(--tv-scale));
+  border-radius: 12px;
+}
+
+body.tv-mode .min-h-screen {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+/* Increase hit area for bottom nav */
+body.tv-mode .bottom-nav, body.tv-mode .bottom-nav button {
+  padding: 1rem 1.25rem;
+}
