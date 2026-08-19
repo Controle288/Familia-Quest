@@ -1,0 +1,7 @@
+{
+  "yaml.yamlVersion": "1.2",
+  "yaml.schemaStore.enable": true,
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
+  }
+}
