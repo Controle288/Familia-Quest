@@ -58,6 +58,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
         assigned_to: assignedTo,
         category,
         icon_name: iconName,
+        points: Number(rewardValue) || 50,
         reward_type: rewardMoney > 0 ? 'xp_and_money' : 'xp_only',
         reward_value: Number(rewardValue) || 50,
         reward_money: Number(rewardMoney) || 0,
