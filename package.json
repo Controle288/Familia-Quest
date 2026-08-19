@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "start": "node server.cjs",
     "test:e2e": "node e2e/test.cjs",
+    "test": "vitest run",
     "clean": "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});fs.rmSync('server.js',{force:true});\"",
     "lint": "tsc --noEmit"
   },
@@ -45,6 +46,7 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
+    "vitest": "^3.2.4",
     "vite": "^6.2.3",
     "playwright": "^1.40.0"
   }
