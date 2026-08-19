@@ -65,3 +65,8 @@ jobs:
           E2E_URL: http://localhost:4173
           BROWSER: ${{ matrix.browser }}
         run: npm run test:e2e
+      - name: Asset MIME check (prevent white-screen regression)
+        env:
+          E2E_URL: http://localhost:4173
+          BROWSER: ${{ matrix.browser }}
+        run: node e2e/check-assets.cjs
