@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install
       - name: Start preview server
         run: |
           nohup npm run preview -- --port 4173 &
