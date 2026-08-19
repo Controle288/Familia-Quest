@@ -13,6 +13,7 @@ import {
   type AuthUser,
 } from '../lib/supabase';
 import { applyLevelUp, canRedeem, applyRedeem } from '../lib/gameLogic';
+import { playComplete, playReward, playLevelUp, playError } from '../lib/sounds';
 import {
   Family,
   Profile,
@@ -86,6 +87,7 @@ interface FamilyContextType {
   copyInviteCode: () => void;
   resetDemoData: () => void;
   signOut: () => Promise<void>;
+  grantAllowance: (profileId: string, amount: number) => Promise<void>;
 }
 
 const FamilyContext = createContext<FamilyContextType | undefined>(undefined);
@@ -343,6 +345,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const failed = results.some((r) => r.error);
     if (failed) {
       addToast('Erro ao salvar', 'Não foi possível sincronizar com o servidor. Tente novamente.', 'error');
+      playError();
       await refreshFamilyData();
       return false;
     }
@@ -375,6 +378,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     if (!ok) return;
 
+    playComplete();
     addToast(
       'Missão enviada!',
       `"${task?.title || 'Tarefa'}" está aguardando aprovação dos pais.`,
@@ -438,7 +442,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setActivityLogs((prev) => [logItem, ...prev]);
 
-    const ok = await persistWrites([
+    const writes = [
       syncSupabaseUpdate('tasks', taskId, { status: 'completed', approved_at: 'Agora mesmo' }),
       syncSupabaseUpdate('profiles', assignedChild.id, {
         xp: result.xp,
@@ -448,7 +452,24 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         balance: result.balance,
       }),
       syncSupabaseWrite('activity_logs', logItem as unknown as Record<string, unknown>),
-    ]);
+    ];
+
+    if (result.leveledUp) {
+      const levelUpLog: ActivityLog = {
+        id: Math.random().toString(36).substring(2, 9),
+        family_id: family.id,
+        profile_id: assignedChild.id,
+        profile_name: assignedChild.full_name,
+        type: 'level_up',
+        title: `Subiu para o nível ${result.level}!`,
+        points_change: 0,
+        created_at: new Date().toISOString(),
+      };
+      setActivityLogs((prev) => [levelUpLog, ...prev]);
+      writes.push(syncSupabaseWrite('activity_logs', levelUpLog as unknown as Record<string, unknown>));
+    }
+
+    const ok = await persistWrites(writes);
 
     if (!ok) return;
 
@@ -459,17 +480,21 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     );
 
     if (result.leveledUp) {
+      playLevelUp();
       setLevelUpModal({
         profileName: assignedChild.full_name,
         newLevel: result.level,
         unlockedTitle: 'Mestre das Missões',
       });
+      // Fire confetti burst
       confetti({
         particleCount: 120,
         spread: 70,
         origin: { y: 0.6 },
         colors: ['#3525cd', '#6b38d4', '#4edea3', '#ffc107', '#ff6b81'],
       });
+    } else {
+      playComplete();
     }
   };
 
@@ -617,6 +642,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     if (!ok) return false;
 
+    playReward();
     confetti({
       particleCount: 80,
       spread: 60,
@@ -732,6 +758,51 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     addToast('Você saiu da sua conta.', undefined, 'info');
   };
 
+  /**
+   * Pais concedem mesada (R$) para um filho — alimenta o saldo usado na loja.
+   */
+  const grantAllowance = async (profileId: string, amount: number) => {
+    if (!Number.isFinite(amount) || amount <= 0) return;
+
+    if (isSupabaseConfigured && !authUser) {
+      setShowOnboarding(true);
+      addToast('Autenticação necessária', 'Entre para conceder mesada.', 'warning');
+      return;
+    }
+
+    const target = profiles.find((p) => p.id === profileId);
+    if (!target) return;
+
+    const newBalance = Number((target.balance + amount).toFixed(2));
+
+    setProfiles((prev) =>
+      prev.map((p) => (p.id === profileId ? { ...p, balance: newBalance } : p))
+    );
+
+    const allowanceLog: ActivityLog = {
+      id: `log-${Date.now()}`,
+      family_id: family.id,
+      profile_id: target.id,
+      profile_name: target.full_name,
+      type: 'allowance',
+      title: `Mesada de R$ ${amount.toFixed(2)}`,
+      points_change: 0,
+      money_change: amount,
+      created_at: new Date().toISOString(),
+    };
+
+    setActivityLogs((prev) => [allowanceLog, ...prev]);
+
+    const ok = await persistWrites([
+      syncSupabaseUpdate('profiles', profileId, { balance: newBalance }),
+      syncSupabaseWrite('activity_logs', allowanceLog as unknown as Record<string, unknown>),
+    ]);
+
+    if (!ok) return;
+
+    addToast('Mesada concedida! 💰', `R$ ${amount.toFixed(2)} adicionados para ${target.full_name}.`, 'success');
+  };
+
   return (
     <FamilyContext.Provider
       value={{
@@ -769,6 +840,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         copyInviteCode,
         resetDemoData,
         signOut,
+        grantAllowance,
       }}
     >
       {children}

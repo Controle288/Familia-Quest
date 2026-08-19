@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { FamilyProvider, useFamily } from './context/FamilyContext';
+import { isMuted, setMuted } from './lib/sounds';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { ParentDashboard } from './components/ParentDashboard';
@@ -16,9 +18,16 @@ import { useEffect } from 'react';
 import { initRemoteNavigation } from './utils/remoteNavigation';
 
 const MainAppContent: React.FC = () => {
-  const { activeTab, setActiveTab, currentProfile, showOnboarding, authUser } = useFamily();
+  const { activeTab, setActiveTab, currentProfile, showOnboarding, authUser, isSyncing } = useFamily();
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isCreateRewardOpen, setIsCreateRewardOpen] = useState(false);
+  const [muted, setMutedState] = useState(isMuted());
+
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    setMutedState(next);
+  };
 
   const desktopTabs = [
     { id: 'quest' as const, label: 'Missões' },
@@ -66,7 +75,14 @@ const MainAppContent: React.FC = () => {
               })}
             </nav>
 
-            <div className="mt-auto rounded-2xl bg-linear-to-br from-[#4f46e5] to-[#8455ef] p-4 text-white shadow-lg shadow-indigo-500/20">
+            <div className="mt-auto rounded-2xl bg-linear-to-br from-[#4f46e5] to-[#8455ef] p-4 text-white shadow-lg shadow-indigo-500/20 relative">
+              <button
+                onClick={toggleMute}
+                title={muted ? 'Ativar sons' : 'Silenciar'}
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-all active:scale-95"
+              >
+                {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-100">Perfil</p>
               <p className="mt-2 font-heading text-lg font-bold">{currentProfile.full_name}</p>
               <p className="text-xs text-indigo-100">{currentProfile.role === 'parent' ? 'Pai/Mãe' : 'Filho/Filha'}</p>
@@ -107,6 +123,13 @@ const MainAppContent: React.FC = () => {
       />
       {showOnboarding && <AuthOnboarding />}
       <ToastContainer />
+
+      {isSyncing && (
+        <div className="fixed bottom-24 right-4 z-40 md:bottom-6 flex items-center gap-2 rounded-full bg-[#3525cd] text-white text-xs font-semibold px-3 py-2 shadow-lg shadow-indigo-500/30">
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          Sincronizando…
+        </div>
+      )}
     </div>
   );
 };

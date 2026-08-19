@@ -12,7 +12,8 @@ import {
   Gift, 
   Layers,
   Award,
-  AlertCircle
+  AlertCircle,
+  Coins
 } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { TaskIcon } from './TaskIcon';
@@ -39,6 +40,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
     rejectTask,
     deleteTask,
     copyInviteCode,
+    grantAllowance,
   } = useFamily();
 
   const [filterChildId, setFilterChildId] = useState<string>('all');
@@ -339,6 +341,49 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
         {/* Tab 2: GERENCIAR (All Tasks & Creation) */}
         {parentSubTab === 'gerenciar' && (
           <div className="p-4 md:p-6 space-y-4">
+            {/* Mesada dos filhos */}
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 p-4 space-y-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-emerald-100 text-[#006e4b] rounded-full">
+                  <Coins className="w-4 h-4" />
+                </span>
+                <div>
+                  <h3 className="font-heading font-bold text-[#006e4b] text-sm">Mesada dos Filhos</h3>
+                  <p className="text-xs text-emerald-700/80">
+                    Adicione saldo (R$) para que possam resgatar prêmios na loja.
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {profiles
+                  .filter((p) => p.role === 'child')
+                  .map((child) => (
+                    <div
+                      key={child.id}
+                      className="bg-white rounded-xl border border-emerald-100 p-3 flex items-center justify-between gap-3"
+                    >
+                      <div>
+                        <p className="font-heading font-bold text-slate-800 text-sm">{child.full_name}</p>
+                        <p className="text-xs text-emerald-700 font-semibold">
+                          R$ {child.balance.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {[5, 10, 20].map((value) => (
+                          <button
+                            key={value}
+                            onClick={() => grantAllowance(child.id, value)}
+                            className="h-8 px-2.5 rounded-full bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 active:scale-95 transition-all shadow-sm"
+                          >
+                            +{value}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-slate-400" />

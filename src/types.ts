@@ -94,7 +94,7 @@ export interface ActivityLog {
   family_id: string;
   profile_id: string;
   profile_name: string;
-  type: 'task_completed' | 'task_approved' | 'task_rejected' | 'reward_redeemed' | 'level_up';
+  type: 'task_completed' | 'task_approved' | 'task_rejected' | 'reward_redeemed' | 'level_up' | 'allowance';
   title: string;
   points_change: number;
   money_change?: number;
