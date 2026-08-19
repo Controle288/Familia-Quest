@@ -5,7 +5,7 @@
    IMPORTANT: we only ever cache *valid* responses (2xx and NOT text/html).
    Caching an HTML error/SPA-fallback page for a /assets/*.js URL is what causes
    the "module script MIME type text/html" console errors, so we guard against it. */
-const CACHE = 'familiaquest-v2';
+const CACHE = 'familiaquest-v3';
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg'];
 
 self.addEventListener('install', (event) => {
