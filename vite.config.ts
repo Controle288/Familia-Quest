@@ -18,5 +18,20 @@ export default defineConfig(() => {
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
+    build: {
+      chunkSizeWarningLimit: 700,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react')) return 'vendor_react';
+              if (id.includes('@supabase')) return 'vendor_supabase';
+              if (id.includes('lucide-react') || id.includes('canvas-confetti')) return 'vendor_ui';
+              return 'vendor';
+            }
+          },
+        },
+      },
+    },
   };
 });
