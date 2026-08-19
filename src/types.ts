@@ -60,6 +60,7 @@ export interface Task {
   due_date?: string;
   submitted_at?: string;
   approved_at?: string;
+  proof_url?: string;
   rejection_reason?: string;
   created_at: string;
 }

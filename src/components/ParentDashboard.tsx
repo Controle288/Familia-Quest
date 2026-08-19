@@ -273,6 +273,15 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
                         <p className="text-xs md:text-sm text-slate-500 font-medium">
                           Feito por: <span className="text-slate-800 font-semibold">{childName}</span> • {task.submitted_at || 'Hoje'}
                         </p>
+                        {task.proof_url && (
+                          <a href={task.proof_url} target="_blank" rel="noreferrer" title="Ver comprovante">
+                            <img
+                              src={task.proof_url}
+                              alt="comprovante"
+                              className="mt-2 w-20 h-20 rounded-xl object-cover border border-indigo-100 hover:opacity-90 transition-opacity"
+                            />
+                          </a>
+                        )}
                       </div>
                     </div>
 

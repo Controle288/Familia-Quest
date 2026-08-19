@@ -23,14 +23,14 @@ export default defineConfig(() => {
       chunkSizeWarningLimit: 700,
       rollupOptions: {
         output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('react')) return 'vendor_react';
-              if (id.includes('@supabase')) return 'vendor_supabase';
-              if (id.includes('lucide-react') || id.includes('canvas-confetti')) return 'vendor_ui';
-              return 'vendor';
-            }
-          },
+      manualChunks(id) {
+        if (id.includes('node_modules')) {
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler|react-is)[\\/]/.test(id)) {
+            return 'vendor_react';
+          }
+          return 'vendor';
+        }
+      },
         },
       },
     },

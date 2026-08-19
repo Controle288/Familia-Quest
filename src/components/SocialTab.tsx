@@ -1,9 +1,14 @@
 import React from 'react';
-import { Trophy, Flame, Sparkles, Award, Star, UserPlus, Heart } from 'lucide-react';
+import { Trophy, Flame, Sparkles, Award, Star, UserPlus, Heart, Users } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
+import { BadgeShelf } from './BadgeShelf';
+import { MotionList, MotionItem } from './motion';
+import { BADGES, familyEarnedCount } from '../lib/badges';
 
 export const SocialTab: React.FC = () => {
-  const { profiles, family, copyInviteCode, activityLogs } = useFamily();
+  const { profiles, family, copyInviteCode, activityLogs, tasks } = useFamily();
+
+  const ctx = { tasks, activityLogs };
 
   // Sort profiles by XP for leaderboard
   const sortedProfiles = [...profiles].sort((a, b) => b.xp - a.xp);
@@ -42,7 +47,7 @@ export const SocialTab: React.FC = () => {
           <span className="text-xs font-semibold text-slate-400">Temporada Atual</span>
         </div>
 
-        <div className="space-y-3">
+        <MotionList className="space-y-3">
           {sortedProfiles.map((p, idx) => {
             const medalColors = [
               'bg-amber-100 text-amber-800 border-amber-300',
@@ -51,7 +56,7 @@ export const SocialTab: React.FC = () => {
             ];
 
             return (
-              <div
+              <MotionItem
                 key={p.id}
                 className="p-4 rounded-2xl border border-slate-100 bg-[#f8f9ff]/70 flex items-center justify-between gap-3 hover:bg-indigo-50/40 transition-all"
               >
@@ -77,6 +82,7 @@ export const SocialTab: React.FC = () => {
                     <p className="text-xs text-slate-500">
                       Nível {p.level} • {p.title || (p.role === 'parent' ? 'Pai/Mãe' : 'Aventureiro')}
                     </p>
+                    <BadgeShelf profile={p} ctx={ctx} className="mt-1.5" />
                   </div>
                 </div>
 
@@ -88,6 +94,49 @@ export const SocialTab: React.FC = () => {
                     <Flame className="w-3.5 h-3.5 fill-current" />
                     {p.streak_days} dias
                   </div>
+                </div>
+              </MotionItem>
+            );
+          })}
+        </MotionList>
+      </section>
+
+      {/* Family Achievements Wall */}
+      <section className="bg-white rounded-3xl p-6 shadow-[0px_4px_20px_rgba(79,70,229,0.06)] border border-slate-100 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 className="font-heading text-lg font-bold text-slate-900 flex items-center gap-2">
+            <Users className="w-5 h-5 text-[#8455ef]" />
+            Conquistas da Família
+          </h3>
+          <span className="text-xs font-semibold text-slate-400">
+            {BADGES.filter((b) => familyEarnedCount(b, profiles, ctx) > 0).length}/{BADGES.length} desbloqueadas
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {BADGES.map((badge) => {
+            const count = familyEarnedCount(badge, profiles, ctx);
+            const unlocked = count > 0;
+            return (
+              <div
+                key={badge.id}
+                className={`p-3 rounded-2xl border flex items-center gap-3 ${
+                  unlocked
+                    ? 'bg-amber-50/70 border-amber-200'
+                    : 'bg-slate-50 border-slate-100'
+                }`}
+              >
+                <span className={`text-2xl ${unlocked ? '' : 'grayscale opacity-50'}`}>{badge.icon}</span>
+                <div className="min-w-0">
+                  <p className="font-heading font-bold text-slate-900 text-xs truncate">{badge.label}</p>
+                  <p className="text-[10px] text-slate-500 leading-tight line-clamp-2">{badge.description}</p>
+                  <span
+                    className={`text-[10px] font-bold mt-0.5 inline-block ${
+                      unlocked ? 'text-amber-700' : 'text-slate-400'
+                    }`}
+                  >
+                    {unlocked ? `${count} membro${count > 1 ? 's' : ''}` : 'Ninguém ainda'}
+                  </span>
                 </div>
               </div>
             );

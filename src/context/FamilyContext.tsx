@@ -72,7 +72,7 @@ interface FamilyContextType {
   addToast: (title: string, description?: string, type?: 'success' | 'info' | 'error' | 'warning') => void;
 
   // Chore Actions
-  completeTask: (taskId: string) => Promise<void>;
+  completeTask: (taskId: string, proofUrl?: string) => Promise<void>;
   approveTask: (taskId: string) => Promise<void>;
   rejectTask: (taskId: string, reason?: string) => Promise<void>;
   createTask: (taskData: Omit<Task, 'id' | 'created_at' | 'status' | 'family_id' | 'created_by'>) => Promise<void>;
@@ -352,7 +352,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return true;
   };
 
-  const completeTask = async (taskId: string) => {
+  const completeTask = async (taskId: string, proofUrl?: string) => {
     if (isSupabaseConfigured && !authUser) {
       setShowOnboarding(true);
       addToast('Autenticação necessária', 'Entre em sua conta para concluir missões.', 'warning');
@@ -364,7 +364,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setTasks((prev) =>
       prev.map((t) =>
         t.id === taskId
-          ? { ...t, status: 'waiting_approval', submitted_at: 'Agora mesmo' }
+          ? { ...t, status: 'waiting_approval', submitted_at: 'Agora mesmo', proof_url: proofUrl }
           : t
       )
     );
@@ -373,6 +373,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       syncSupabaseUpdate('tasks', taskId, {
         status: 'waiting_approval',
         submitted_at: 'Agora mesmo',
+        ...(proofUrl ? { proof_url: proofUrl } : {}),
       }),
     ]);
 

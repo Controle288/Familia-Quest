@@ -397,3 +397,34 @@ export const createProfileInFamily = async (
   if (error) throw error;
   return data;
 };
+
+/**
+ * Upload a task completion proof photo to the `task-proofs` bucket.
+ * Path convention: `<family_id>/<profile_id>/<timestamp>-<filename>`.
+ * Returns the public URL, or null when Storage is unavailable / on error.
+ */
+export const uploadTaskProof = async (
+  file: File,
+  familyId: string,
+  profileId: string
+): Promise<string | null> => {
+  if (!isSupabaseConfigured) return null;
+
+  const ext = file.name.includes('.') ? file.name.split('.').pop() : 'jpg';
+  const path = `${familyId}/${profileId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  try {
+    const { data, error } = await supabase.storage
+      .from('task-proofs')
+      .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+    if (error) {
+      console.warn('uploadTaskProof failed:', error.message);
+      return null;
+    }
+    const { data: urlData } = supabase.storage.from('task-proofs').getPublicUrl(data.path);
+    return urlData.publicUrl;
+  } catch (err) {
+    console.warn('uploadTaskProof error:', err);
+    return null;
+  }
+};

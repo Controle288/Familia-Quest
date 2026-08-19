@@ -9,18 +9,29 @@ import {
   Gift, 
   ArrowRight,
   TrendingUp,
-  Award
+  Award,
+  Camera,
+  X
 } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { TaskIcon } from './TaskIcon';
+import { BadgeShelf } from './BadgeShelf';
+import { uploadTaskProof, isSupabaseConfigured } from '../lib/supabase';
 
 interface ChildDashboardProps {
   onGoToShop: () => void;
 }
 
 export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) => {
-  const { currentProfile, tasks, completeTask, rewards } = useFamily();
+  const { currentProfile, tasks, completeTask, rewards, activityLogs } = useFamily();
   const [submittingTaskId, setSubmittingTaskId] = useState<string | null>(null);
+  const [proofByTask, setProofByTask] = useState<Record<string, { file: File; preview: string }>>({});
+
+  const onPickProof = (taskId: string, file: File | undefined) => {
+    if (!file) return;
+    const preview = URL.createObjectURL(file);
+    setProofByTask((prev) => ({ ...prev, [taskId]: { file, preview } }));
+  };
 
   // Filter tasks assigned to current child
   const childTasks = tasks.filter((t) => t.assigned_to === currentProfile.id);
@@ -48,7 +59,18 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
   const handleComplete = async (taskId: string) => {
     setSubmittingTaskId(taskId);
     try {
-      await completeTask(taskId);
+      let proofUrl: string | undefined;
+      const proof = proofByTask[taskId];
+      if (proof) {
+        if (isSupabaseConfigured) {
+          proofUrl =
+            (await uploadTaskProof(proof.file, currentProfile.family_id, currentProfile.id)) ||
+            undefined;
+        } else {
+          proofUrl = proof.preview; // local-only preview in demo mode
+        }
+      }
+      await completeTask(taskId, proofUrl);
     } finally {
       setSubmittingTaskId(null);
     }
@@ -97,6 +119,16 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Achievements */}
+        <div className="relative z-10 flex items-center gap-2 flex-wrap">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Conquistas</span>
+          <BadgeShelf
+            profile={currentProfile}
+            ctx={{ tasks, activityLogs }}
+            className="flex-1"
+          />
         </div>
 
         {/* XP Progress Bar */}
@@ -205,16 +237,55 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
                   </div>
                 </div>
 
-                {/* Mark as Done Button */}
-                <button
-                  onClick={() => handleComplete(task.id)}
-                  disabled={isSubmitting}
-                  data-testid={`complete-task-${task.id}`}
-                  className="w-12 h-12 rounded-full border-2 border-slate-200 text-slate-400 hover:border-[#3525cd] hover:text-[#3525cd] hover:bg-indigo-50 flex items-center justify-center shrink-0 transition-all active:scale-95 shadow-xs"
-                  title="Concluir Tarefa"
-                >
-                  <Check className="w-5 h-5 stroke-[2.5px]" />
-                </button>
+                {/* Photo proof + complete */}
+                <div className="flex flex-col items-center gap-1.5 shrink-0">
+                  {proofByTask[task.id] ? (
+                    <div className="relative">
+                      <img
+                        src={proofByTask[task.id].preview}
+                        alt="comprovante"
+                        className="w-12 h-12 rounded-full object-cover border-2 border-[#3525cd]"
+                      />
+                      <button
+                        onClick={() =>
+                          setProofByTask((prev) => {
+                            const next = { ...prev };
+                            delete next[task.id];
+                            return next;
+                          })
+                        }
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center"
+                        title="Remover foto"
+                      >
+                        <X className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      title="Anexar foto (opcional)"
+                      className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 hover:bg-indigo-50 hover:text-[#3525cd] flex items-center justify-center cursor-pointer transition-all"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        data-testid={`proof-input-${task.id}`}
+                        onChange={(e) => onPickProof(task.id, e.target.files?.[0])}
+                      />
+                    </label>
+                  )}
+
+                  <button
+                    onClick={() => handleComplete(task.id)}
+                    disabled={isSubmitting}
+                    data-testid={`complete-task-${task.id}`}
+                    className="w-12 h-12 rounded-full border-2 border-slate-200 text-slate-400 hover:border-[#3525cd] hover:text-[#3525cd] hover:bg-indigo-50 flex items-center justify-center shrink-0 transition-all active:scale-95 shadow-xs"
+                    title="Concluir Tarefa"
+                  >
+                    <Check className="w-5 h-5 stroke-[2.5px]" />
+                  </button>
+                </div>
               </div>
             );
           })}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bell, Flame, ChevronDown, Check, UserCheck, Sparkles, RefreshCw, Compass, LogOut } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
+import { ThemeToggle } from './ThemeToggle';
 
 export const Header: React.FC = () => {
   const { 
@@ -22,7 +23,7 @@ export const Header: React.FC = () => {
   const pendingApprovalsCount = tasks.filter((t) => t.status === 'waiting_approval').length;
 
   return (
-    <header className="fixed top-0 left-0 right-0 w-full h-17 bg-[#f8f9ff]/90 backdrop-blur-md z-40 border-b border-indigo-100/60 transition-all">
+    <header className="fixed top-0 left-0 right-0 w-full h-17 bg-[#f8f9ff]/90 backdrop-blur-md z-40 border-b border-indigo-100/60 dark:bg-slate-900/90 dark:border-indigo-800/60 transition-all">
       <div className="max-w-[1600px] mx-auto h-full px-4 md:px-6 xl:px-8 flex justify-between items-center">
         {/* Left: Avatar & Family Name */}
         <div className="flex items-center gap-3">
@@ -93,6 +94,8 @@ export const Header: React.FC = () => {
 
         {/* Right: Streak & Notifications */}
         <div className="flex items-center gap-2">
+          <ThemeToggle />
+
           {currentProfile.role === 'child' && (
             <div className="bg-[#6b38d4]/10 text-[#6b38d4] px-3 py-1.5 rounded-full flex items-center gap-1.5 font-semibold text-xs border border-violet-200/50">
               <Flame className="w-4 h-4 text-orange-500 fill-orange-500 animate-pulse" />

@@ -1,0 +1,25 @@
+{
+  "name": "FamilyQuest - Gamificação Familiar",
+  "short_name": "FamilyQuest",
+  "description": "Transforme a rotina em uma aventura épica para toda a família com missões, aprovação dos pais, XP e recompensas.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8f9ff",
+  "theme_color": "#3525cd",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
