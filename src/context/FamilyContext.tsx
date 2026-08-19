@@ -258,6 +258,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setProfiles(nextState.profiles as Profile[]);
       setTasks(nextState.tasks as Task[]);
       setRewards(nextState.rewards as Reward[]);
+      setRedemptions((nextState.redemptions as Redemption[]) ?? []);
+      setActivityLogs((nextState.activityLogs as ActivityLog[]) ?? []);
       setCurrentProfileId(nextState.myProfileId);
     } catch (error) {
       console.warn('Failed to refresh family session from Supabase:', error);
@@ -343,10 +345,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const currentXp = assignedChild.xp + xpGained;
     let newLevel = assignedChild.level;
     let nextThreshold = assignedChild.xp_to_next_level;
+    let xpBase = assignedChild.xp_base;
     let leveledUp = false;
 
-    // Level up calculation logic (every 500 XP = 1 Level)
-    if (currentXp >= assignedChild.xp_to_next_level) {
+    // Level up: every 500 XP above the current level base advances one level.
+    while (currentXp >= nextThreshold) {
+      xpBase = nextThreshold;
       newLevel += 1;
       nextThreshold += 500;
       leveledUp = true;
@@ -409,6 +413,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               ...p,
               xp: currentXp,
               level: newLevel,
+              xp_base: xpBase,
               xp_to_next_level: nextThreshold,
               balance: p.balance + moneyGained,
             }
@@ -420,6 +425,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       await syncSupabaseUpdate('profiles', assignedChild.id, {
         xp: currentXp,
         level: newLevel,
+        xp_base: xpBase,
         xp_to_next_level: nextThreshold,
         balance: assignedChild.balance + moneyGained,
       });
@@ -503,11 +509,27 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       )
     );
 
+    const rejectedTask = tasks.find((t) => t.id === taskId);
+
+    const rejectLog: ActivityLog = {
+      id: `log-${Date.now()}`,
+      family_id: family.id,
+      profile_id: rejectedTask?.assigned_to ?? currentProfile.id,
+      profile_name: (profiles.find((p) => p.id === rejectedTask?.assigned_to)?.full_name) || 'Filho(a)',
+      type: 'task_rejected',
+      title: rejectedTask?.title ?? 'Tarefa',
+      points_change: 0,
+      created_at: new Date().toISOString(),
+    };
+
+    setActivityLogs((prev) => [rejectLog, ...prev]);
+
     if (isSupabaseConfigured) {
       await syncSupabaseUpdate('tasks', taskId, {
         status: 'pending',
         rejection_reason: reason || 'Precisa refazer alguns pontos antes da aprovação.',
       });
+      await syncSupabaseWrite('activity_logs', rejectLog as unknown as Record<string, unknown>);
     }
 
     addToast('Missão Rejeitada', 'A tarefa retornou para a lista com status pendente.', 'warning');
@@ -592,15 +614,23 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const reward = rewards.find((r) => r.id === rewardId);
     if (!reward) return false;
 
+    const moneyNeeded = reward.money_cost || 0;
     if (currentProfile.xp < reward.points_cost) {
       addToast('Pontos insuficientes', `Você precisa de ${reward.points_cost} XP para este prêmio.`, 'error');
+      return false;
+    }
+    if (moneyNeeded > 0 && currentProfile.balance < moneyNeeded) {
+      addToast('Saldo insuficiente', `Você precisa de R$ ${moneyNeeded.toFixed(2)} para este prêmio.`, 'error');
       return false;
     }
 
     /* =========================================================================
      * TODO: [SUPABASE INTEGRATION - REDEEM REWARD]
-     * 1. Deduzir XP:
-     * await supabase.from('profiles').update({ xp: currentProfile.xp - reward.points_cost }).eq('id', currentProfile.id);
+     * 1. Deduzir XP e Saldo:
+     * await supabase.from('profiles').update({
+     *   xp: currentProfile.xp - reward.points_cost,
+     *   balance: currentProfile.balance - reward.money_cost,
+     * }).eq('id', currentProfile.id);
      * 2. Registrar resgate:
      * await supabase.from('redemptions').insert({
      *   family_id: family.id,
@@ -611,11 +641,15 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
      * });
      * ========================================================================= */
 
-    // Deduct points
+    // Deduct points and money
     setProfiles((prev) =>
       prev.map((p) =>
         p.id === currentProfile.id
-          ? { ...p, xp: p.xp - reward.points_cost }
+          ? {
+              ...p,
+              xp: p.xp - reward.points_cost,
+              balance: p.balance - moneyNeeded,
+            }
           : p
       )
     );
@@ -623,6 +657,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (isSupabaseConfigured) {
       await syncSupabaseUpdate('profiles', currentProfile.id, {
         xp: currentProfile.xp - reward.points_cost,
+        balance: currentProfile.balance - moneyNeeded,
       });
     }
 
@@ -640,8 +675,23 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setRedemptions((prev) => [newRedemption, ...prev]);
 
+    const redeemLog: ActivityLog = {
+      id: `log-${Date.now()}`,
+      family_id: family.id,
+      profile_id: currentProfile.id,
+      profile_name: currentProfile.full_name,
+      type: 'reward_redeemed',
+      title: reward.title,
+      points_change: -reward.points_cost,
+      money_change: -reward.money_cost,
+      created_at: new Date().toISOString(),
+    };
+
+    setActivityLogs((prev) => [redeemLog, ...prev]);
+
     if (isSupabaseConfigured) {
       await syncSupabaseWrite('redemptions', newRedemption as unknown as Record<string, unknown>);
+      await syncSupabaseWrite('activity_logs', redeemLog as unknown as Record<string, unknown>);
     }
 
     confetti({

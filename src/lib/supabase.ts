@@ -32,6 +32,7 @@ export type ProfileRecord = {
   title?: string;
   level: number;
   xp: number;
+  xp_base: number;
   xp_to_next_level: number;
   balance: number;
   streak_days: number;
@@ -333,17 +334,21 @@ export const loadUserFamilyState = async () => {
 
   const familyId = (myProfile as ProfileRecord).family_id;
 
-  const [familyResult, profileResult, taskResult, rewardResult] = await Promise.all([
+  const [familyResult, profileResult, taskResult, rewardResult, redemptionResult, logResult] = await Promise.all([
     supabase.from('families').select('*').eq('id', familyId).limit(1),
     supabase.from('profiles').select('*').eq('family_id', familyId),
     supabase.from('tasks').select('*').eq('family_id', familyId).limit(100),
     supabase.from('rewards').select('*').eq('family_id', familyId).limit(100),
+    supabase.from('redemptions').select('*').eq('family_id', familyId).limit(100),
+    supabase.from('activity_logs').select('*').eq('family_id', familyId).limit(100),
   ]);
 
   const family = familyResult.data?.[0] ?? null;
   const profiles = profileResult.data ?? [];
   const tasks = taskResult.data ?? [];
   const rewards = rewardResult.data ?? [];
+  const redemptions = redemptionResult.data ?? [];
+  const activityLogs = logResult.data ?? [];
 
   return {
     authUser,
@@ -352,6 +357,8 @@ export const loadUserFamilyState = async () => {
     profiles,
     tasks,
     rewards,
+    redemptions,
+    activityLogs,
   };
 };
 
