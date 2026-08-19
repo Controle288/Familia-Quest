@@ -9,19 +9,19 @@ export const BottomNav: React.FC = () => {
   const pendingCount = tasks.filter((t) => t.status === 'waiting_approval').length;
 
   const navItems: { id: ActiveTab; label: string; icon: typeof ClipboardList; badge?: number }[] = [
-    { 
-      id: 'quest', 
-      label: 'Quest', 
+    {
+      id: 'quest',
+      label: 'Missões',
       icon: ClipboardList,
-      badge: currentProfile.role === 'parent' && pendingCount > 0 ? pendingCount : undefined 
+      badge: currentProfile.role === 'parent' && pendingCount > 0 ? pendingCount : undefined
     },
-    { id: 'shop', label: 'Shop', icon: Gift },
+    { id: 'shop', label: 'Loja', icon: Gift },
     { id: 'social', label: 'Social', icon: Users },
-    { id: 'stats', label: 'Stats', icon: BarChart3 },
+    { id: 'stats', label: 'Estatísticas', icon: BarChart3 },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 w-full h-[72px] bg-[#f8f9ff]/90 backdrop-blur-lg border-t border-indigo-100/80 z-40 shadow-[0px_-4px_20px_rgba(79,70,229,0.06)] rounded-t-2xl md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 w-full h-18 bg-[#f8f9ff]/90 backdrop-blur-lg border-t border-indigo-100/80 z-40 shadow-[0px_-4px_20px_rgba(79,70,229,0.06)] rounded-t-2xl md:hidden">
       <div className="max-w-md mx-auto h-full flex justify-around items-center px-4">
         {navItems.map((item) => {
           const Icon = item.icon;

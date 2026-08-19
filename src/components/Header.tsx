@@ -22,7 +22,7 @@ export const Header: React.FC = () => {
   const pendingApprovalsCount = tasks.filter((t) => t.status === 'waiting_approval').length;
 
   return (
-    <header className="fixed top-0 left-0 right-0 w-full h-[68px] bg-[#f8f9ff]/90 backdrop-blur-md z-40 border-b border-indigo-100/60 transition-all">
+    <header className="fixed top-0 left-0 right-0 w-full h-17 bg-[#f8f9ff]/90 backdrop-blur-md z-40 border-b border-indigo-100/60 transition-all">
       <div className="max-w-[1600px] mx-auto h-full px-4 md:px-6 xl:px-8 flex justify-between items-center">
         {/* Left: Avatar & Family Name */}
         <div className="flex items-center gap-3">
