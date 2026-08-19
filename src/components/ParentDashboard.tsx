@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { TaskIcon } from './TaskIcon';
+import { DueBadge } from './DueBadge';
 import { ParentSubTab } from '../types';
 import { MotionItem } from './motion';
 
@@ -436,24 +437,25 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
                         <TaskIcon name={task.icon_name} className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-heading font-bold text-slate-800 text-sm">{task.title}</h4>
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              task.status === 'completed'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : task.status === 'waiting_approval'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-slate-100 text-slate-600'
-                            }`}
-                          >
-                            {task.status === 'completed'
-                              ? 'Concluída'
-                              : task.status === 'waiting_approval'
-                              ? 'Aguardando Aprovação'
-                              : 'Pendente'}
-                          </span>
-                        </div>
+                         <div className="flex items-center gap-2">
+                           <h4 className="font-heading font-bold text-slate-800 text-sm">{task.title}</h4>
+                           <span
+                             className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                               task.status === 'completed'
+                                 ? 'bg-emerald-100 text-emerald-800'
+                                 : task.status === 'waiting_approval'
+                                 ? 'bg-amber-100 text-amber-800'
+                                 : 'bg-slate-100 text-slate-600'
+                             }`}
+                           >
+                             {task.status === 'completed'
+                               ? 'Concluída'
+                               : task.status === 'waiting_approval'
+                               ? 'Aguardando Aprovação'
+                               : 'Pendente'}
+                           </span>
+                           <DueBadge task={task} />
+                         </div>
                         <p className="text-xs text-slate-500">
                           Atribuído a: <span className="font-semibold text-slate-700">{child?.full_name}</span> • {task.reward_value} XP
                         </p>

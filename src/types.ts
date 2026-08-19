@@ -32,6 +32,7 @@ export interface Profile {
   xp_to_next_level: number;
   balance: number;
   streak_days: number;
+  theme_pref?: string;
   created_at: string;
 }
 
@@ -58,6 +59,9 @@ export interface Task {
   reward_money?: number; // R$ amount
   status: TaskStatus;
   due_date?: string;
+  due_time?: string;
+  recurrence?: 'none' | 'daily' | 'weekly';
+  reminder_minutes?: number;
   submitted_at?: string;
   approved_at?: string;
   proof_url?: string;
@@ -102,6 +106,72 @@ export interface ActivityLog {
   created_at: string;
 }
 
-export type ActiveTab = 'quest' | 'shop' | 'social' | 'stats';
+export type ActiveTab = 'quest' | 'shop' | 'social' | 'stats' | 'settings' | 'tutorial' | 'admin';
 export type ParentSubTab = 'pendentes' | 'gerenciar' | 'loja';
+
+// ---------------------------------------------------------------------------
+// v2 domain types
+// ---------------------------------------------------------------------------
+export type PlanInterval = 'month' | 'year' | 'once';
+export type FamilyPlan = 'free' | 'premium';
+export type ThemeVariant = 'light' | 'dark';
+
+export interface Admin {
+  user_id: string;
+  created_at?: string;
+}
+
+export interface FamilySettings {
+  family_id: string;
+  plan: FamilyPlan;
+  theme: string;
+  theme_variant: ThemeVariant;
+  background_key?: string;
+  schedule_enabled: boolean;
+  location_enabled: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  interval: PlanInterval;
+  limits: Record<string, unknown>;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export type PaymentProvider = 'stripe' | 'mercadopago';
+
+export interface PaymentSettings {
+  provider: PaymentProvider;
+  public_key?: string;
+  secret_key?: string;
+  webhook_secret?: string;
+  updated_by?: string;
+  updated_at?: string;
+}
+
+export type TicketStatus = 'open' | 'in_progress' | 'done' | 'answered';
+
+export interface SupportTicket {
+  id: string;
+  family_id: string;
+  author_profile_id: string;
+  message: string;
+  status: TicketStatus;
+  admin_reply?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProfileLocation {
+  profile_id: string;
+  family_id: string;
+  lat?: number;
+  lng?: number;
+  updated_at?: string;
+}
 

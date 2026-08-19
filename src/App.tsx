@@ -14,12 +14,15 @@ import { LevelUpModal } from './components/LevelUpModal';
 import { CreateTaskModal } from './components/CreateTaskModal';
 import { CreateRewardModal } from './components/CreateRewardModal';
 import { AuthOnboarding } from './components/AuthOnboarding';
+import { SettingsTab } from './components/SettingsTab';
+import { TutorialTab } from './components/TutorialTab';
+import { AdminPanel } from './components/AdminPanel';
 import { ToastContainer } from './components/ToastContainer';
 import { useEffect } from 'react';
 import { initRemoteNavigation } from './utils/remoteNavigation';
 
 const MainAppContent: React.FC = () => {
-  const { activeTab, setActiveTab, currentProfile, authUser, isSyncing, profiles, family } = useFamily();
+  const { activeTab, setActiveTab, currentProfile, authUser, isSyncing, profiles, family, isAdminUser } = useFamily();
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isCreateRewardOpen, setIsCreateRewardOpen] = useState(false);
   const [muted, setMutedState] = useState(isMuted());
@@ -41,6 +44,9 @@ const MainAppContent: React.FC = () => {
     { id: 'shop' as const, label: 'Loja' },
     { id: 'social' as const, label: 'Social' },
     { id: 'stats' as const, label: 'Estatísticas' },
+    { id: 'settings' as const, label: 'Ajustes' },
+    { id: 'tutorial' as const, label: 'Tutorial' },
+    ...(isAdminUser ? [{ id: 'admin' as const, label: 'Admin' }] : []),
   ];
 
   return (
@@ -84,7 +90,7 @@ const MainAppContent: React.FC = () => {
               </button>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-100">Perfil</p>
               <p className="mt-2 font-heading text-lg font-bold">{currentProfile.full_name}</p>
-              <p className="text-xs text-indigo-100">{currentProfile.role === 'parent' ? 'Pai/Mãe' : 'Filho/Filha'}</p>
+              <p className="text-xs text-indigo-100">{currentProfile.role === 'parent' ? 'Responsável' : 'Filho(a)'}</p>
             </div>
           </aside>
 
@@ -111,6 +117,9 @@ const MainAppContent: React.FC = () => {
               {activeTab === 'shop' && <RewardStore />}
               {activeTab === 'social' && <SocialTab />}
               {activeTab === 'stats' && <StatsTab />}
+              {activeTab === 'settings' && <SettingsTab />}
+              {activeTab === 'tutorial' && <TutorialTab />}
+              {activeTab === 'admin' && <AdminPanel />}
             </motion.div>
           </main>
         </div>

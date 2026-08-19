@@ -60,7 +60,7 @@ export const Header: React.FC = () => {
                 <ChevronDown className="w-3.5 h-3.5 text-indigo-400" />
               </div>
               <span className="text-xs text-slate-500 font-medium">
-                {currentProfile.full_name} ({currentProfile.role === 'parent' ? 'Pai/Mãe' : 'Filho'})
+                {currentProfile.full_name} ({currentProfile.role === 'parent' ? 'Responsável' : 'Filho(a)'})
               </span>
             </div>
           </button>

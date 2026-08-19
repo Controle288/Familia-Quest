@@ -3,9 +3,14 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { applyTheme, getStoredTheme } from './lib/theme';
+import { applyThemePref, loadThemePref } from './lib/themes';
 
 // Apply the persisted/system theme before first paint to avoid a flash.
 applyTheme(getStoredTheme());
+
+// Apply the chosen decorative theme + light/dark variant.
+const themePref = loadThemePref();
+applyThemePref(themePref.theme, themePref.variant);
 
 // Clear any stale demo-mode data left by previous versions of the app so
 // returning visitors start from a clean, official (server-backed) state.

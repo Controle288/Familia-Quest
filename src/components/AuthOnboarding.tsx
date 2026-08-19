@@ -9,10 +9,13 @@ import {
   loadUserFamilyState,
   signInWithEmail,
   signUpWithEmail,
+  loadFamilySettings,
+  getFamilyMemberCounts,
   type ProfileRecord,
 } from '../lib/supabase';
 import { defaultAvatar } from '../lib/avatars';
 import { Profile } from '../types';
+import { ForgotPassword } from './ForgotPassword';
 
 type Mode = 'create' | 'login';
 
@@ -26,6 +29,7 @@ export const AuthOnboarding: React.FC = () => {
   const [inviteCodeInput, setInviteCodeInput] = useState('');
   const [joinRole, setJoinRole] = useState<'parent' | 'child'>('child');
   const [isBusy, setIsBusy] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
 
   const handleCreateAccount = async () => {
     if (!email.trim() || !password.trim()) {
@@ -143,10 +147,29 @@ export const AuthOnboarding: React.FC = () => {
         throw new Error('Código não encontrado');
       }
 
+      const settings = await loadFamilySettings(family.id);
+      const isPremium = (settings?.plan ?? 'free') === 'premium';
+      if (!isPremium) {
+        const { parents, children } = await getFamilyMemberCounts(family.id);
+        if (joinRole === 'parent') {
+          if (parents >= 2 || children > 0) {
+            throw new Error(
+              'No plano gratuito só é possível 2 responsáveis (sem filhos) ou 1 responsável com até 2 filhos. Assine o Premium para liberar.'
+            );
+          }
+        } else {
+          if (parents !== 1 || children >= 2) {
+            throw new Error(
+              'No plano gratuito é permitido 1 responsável com até 2 filhos. Assine o Premium para adicionar mais.'
+            );
+          }
+        }
+      }
+
       const draft: Omit<ProfileRecord, 'id' | 'family_id' | 'created_at'> = {
         user_id: authUser.id,
-        name: joinRole === 'parent' ? 'Pai/Mãe' : 'Filho/Filha',
-        full_name: joinRole === 'parent' ? 'Pai/Mãe' : 'Filho/Filha',
+        name: joinRole === 'parent' ? 'Responsável' : 'Filho(a)',
+        full_name: joinRole === 'parent' ? 'Responsável' : 'Filho(a)',
         role: joinRole,
         avatar_url: defaultAvatar(joinRole, 0),
         title: joinRole === 'parent' ? 'Guardião da Família' : 'Aventureiro',
@@ -294,14 +317,23 @@ export const AuthOnboarding: React.FC = () => {
                 </p>
               </>
             ) : (
-              <button
-                onClick={handleLogin}
-                disabled={isBusy}
-                className="w-full h-12 bg-[#3525cd] text-white font-heading font-bold text-sm rounded-full shadow-[0px_4px_20px_rgba(79,70,229,0.2)] hover:bg-[#2e1fb5] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                <LogIn className="w-5 h-5" />
-                {isBusy ? 'Aguarde...' : 'Entrar'}
-              </button>
+              <>
+                <button
+                  onClick={handleLogin}
+                  disabled={isBusy}
+                  className="w-full h-12 bg-[#3525cd] text-white font-heading font-bold text-sm rounded-full shadow-[0px_4px_20px_rgba(79,70,229,0.2)] hover:bg-[#2e1fb5] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  <LogIn className="w-5 h-5" />
+                  {isBusy ? 'Aguarde...' : 'Entrar'}
+                </button>
+
+                <button
+                  onClick={() => setShowForgot(true)}
+                  className="text-sm font-semibold text-[#3525cd] hover:underline"
+                >
+                  Esqueci a senha
+                </button>
+              </>
             )}
 
             <div className="relative">
@@ -326,6 +358,8 @@ export const AuthOnboarding: React.FC = () => {
           </section>
         )}
       </div>
+
+      {showForgot && <ForgotPassword onClose={() => setShowForgot(false)} />}
     </div>
   );
 };

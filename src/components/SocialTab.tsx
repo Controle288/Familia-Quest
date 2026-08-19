@@ -80,7 +80,7 @@ export const SocialTab: React.FC = () => {
                       {p.full_name}
                     </h4>
                     <p className="text-xs text-slate-500">
-                      Nível {p.level} • {p.title || (p.role === 'parent' ? 'Pai/Mãe' : 'Aventureiro')}
+                      Nível {p.level} • {p.title || (p.role === 'parent' ? 'Responsável' : 'Aventureiro')}
                     </p>
                     <BadgeShelf profile={p} ctx={ctx} className="mt-1.5" />
                   </div>

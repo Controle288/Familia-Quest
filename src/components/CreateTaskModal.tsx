@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Sparkles, DollarSign, Check, Brush, Bed, BookOpen, Dog, Utensils, Trash2, Heart } from 'lucide-react';
+import { X, Sparkles, DollarSign, Check, Brush, Bed, BookOpen, Dog, Utensils, Trash2, Heart, Clock, Crown } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { TaskCategory, RewardType } from '../types';
 
@@ -9,7 +9,9 @@ interface CreateTaskModalProps {
 }
 
 export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose }) => {
-  const { profiles, createTask } = useFamily();
+  const { profiles, createTask, familySettings } = useFamily();
+
+  const scheduleEnabled = familySettings?.schedule_enabled ?? false;
 
   const childrenProfiles = profiles.filter((p) => p.role === 'child');
 
@@ -20,6 +22,9 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   const [iconName, setIconName] = useState('cleaning_services');
   const [rewardValue, setRewardValue] = useState(50);
   const [rewardMoney, setRewardMoney] = useState(0);
+  const [dueTime, setDueTime] = useState('');
+  const [recurrence, setRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
+  const [reminderMinutes, setReminderMinutes] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -62,6 +67,9 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
         reward_type: rewardMoney > 0 ? 'xp_and_money' : 'xp_only',
         reward_value: Number(rewardValue) || 50,
         reward_money: Number(rewardMoney) || 0,
+        due_time: scheduleEnabled && dueTime ? new Date(dueTime).toISOString() : undefined,
+        recurrence: scheduleEnabled ? recurrence : 'none',
+        reminder_minutes: scheduleEnabled ? reminderMinutes : 0,
       });
       onClose();
       // Reset
@@ -69,6 +77,9 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
       setDescription('');
       setRewardValue(50);
       setRewardMoney(0);
+      setDueTime('');
+      setRecurrence('none');
+      setReminderMinutes(0);
     } finally {
       setIsSubmitting(false);
     }
@@ -225,6 +236,54 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
               className="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#3525cd]"
             />
           </div>
+
+          {/* Schedule (premium) */}
+          {scheduleEnabled ? (
+            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-3">
+              <p className="flex items-center gap-2 text-xs font-bold text-[#3525cd] uppercase tracking-wider">
+                <Clock className="w-4 h-4" /> Horário e lembrete
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Data e hora limite</label>
+                <input
+                  type="datetime-local"
+                  value={dueTime}
+                  onChange={(e) => setDueTime(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Repetição</label>
+                  <select
+                    value={recurrence}
+                    onChange={(e) => setRecurrence(e.target.value as 'none' | 'daily' | 'weekly')}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm"
+                  >
+                    <option value="none">Única</option>
+                    <option value="daily">Diária</option>
+                    <option value="weekly">Semanal</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Avisar antes (min)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="5"
+                    value={reminderMinutes}
+                    onChange={(e) => setReminderMinutes(Number(e.target.value))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-2xl bg-slate-50 p-3 text-xs text-slate-500">
+              <Crown className="w-4 h-4 text-amber-500" />
+              Horários e lembretes estão disponíveis no plano Premium.
+            </div>
+          )}
 
           {/* Submit */}
           <div className="pt-2">

@@ -1,10 +1,10 @@
 import React from 'react';
-import { ClipboardList, Gift, Users, BarChart3 } from 'lucide-react';
+import { ClipboardList, Gift, Users, BarChart3, Settings, GraduationCap, ShieldCheck } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { ActiveTab } from '../types';
 
 export const BottomNav: React.FC = () => {
-  const { activeTab, setActiveTab, tasks, currentProfile } = useFamily();
+  const { activeTab, setActiveTab, tasks, currentProfile, isAdminUser } = useFamily();
 
   const pendingCount = tasks.filter((t) => t.status === 'waiting_approval').length;
 
@@ -18,11 +18,14 @@ export const BottomNav: React.FC = () => {
     { id: 'shop', label: 'Loja', icon: Gift },
     { id: 'social', label: 'Social', icon: Users },
     { id: 'stats', label: 'Estatísticas', icon: BarChart3 },
+    { id: 'settings', label: 'Ajustes', icon: Settings },
+    { id: 'tutorial', label: 'Turma', icon: GraduationCap },
+    ...(isAdminUser ? [{ id: 'admin' as ActiveTab, label: 'Admin', icon: ShieldCheck }] : []),
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 w-full h-18 bg-[#f8f9ff]/90 backdrop-blur-lg border-t border-indigo-100/80 z-40 shadow-[0px_-4px_20px_rgba(79,70,229,0.06)] rounded-t-2xl md:hidden dark:bg-slate-900/90 dark:border-indigo-800/60">
-      <div className="max-w-md mx-auto h-full flex justify-around items-center px-4">
+      <div className="max-w-md mx-auto h-full flex justify-around items-center px-2 overflow-x-auto no-scrollbar">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;

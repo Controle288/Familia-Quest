@@ -15,16 +15,17 @@ import {
 } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { TaskIcon } from './TaskIcon';
+import { DueBadge } from './DueBadge';
 import { BadgeShelf } from './BadgeShelf';
 import { MotionItem } from './motion';
-import { uploadTaskProof, isSupabaseConfigured } from '../lib/supabase';
+import { uploadTaskProof, isSupabaseConfigured, upsertLocation } from '../lib/supabase';
 
 interface ChildDashboardProps {
   onGoToShop: () => void;
 }
 
 export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) => {
-  const { currentProfile, tasks, completeTask, rewards, activityLogs } = useFamily();
+  const { currentProfile, tasks, completeTask, rewards, activityLogs, familySettings } = useFamily();
   const [submittingTaskId, setSubmittingTaskId] = useState<string | null>(null);
   const [proofByTask, setProofByTask] = useState<Record<string, { file: File; preview: string }>>({});
 
@@ -72,6 +73,25 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
         }
       }
       await completeTask(taskId, proofUrl);
+
+      if (isSupabaseConfigured && familySettings?.location_enabled && 'geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            try {
+              await upsertLocation({
+                profile_id: currentProfile.id,
+                family_id: currentProfile.family_id,
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+              });
+            } catch {
+              /* location is best-effort */
+            }
+          },
+          () => {},
+          { enableHighAccuracy: false, timeout: 8000 }
+        );
+      }
     } finally {
       setSubmittingTaskId(null);
     }
@@ -234,6 +254,7 @@ export const ChildDashboard: React.FC<ChildDashboardProps> = ({ onGoToShop }) =>
                           R$ {task.reward_money.toFixed(2)}
                         </span>
                       )}
+                      <DueBadge task={task} />
                     </div>
                   </div>
                 </div>

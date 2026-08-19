@@ -428,3 +428,194 @@ export const uploadTaskProof = async (
     return null;
   }
 };
+
+// ---------------------------------------------------------------------------
+// v2 helpers — admin, planos, pagamentos, temas, tickets, localização, OTP.
+// ---------------------------------------------------------------------------
+
+export const getCurrentIsAdmin = async (): Promise<boolean> => {
+  if (!isSupabaseConfigured) return false;
+  const { data } = await supabase.from('admins').select('user_id').limit(1).maybeSingle();
+  return Boolean(data);
+};
+
+// Family settings
+export const loadFamilySettings = async (familyId: string) => {
+  if (!isSupabaseConfigured) return null;
+  const { data } = await supabase
+    .from('family_settings')
+    .select('*')
+    .eq('family_id', familyId)
+    .maybeSingle();
+  return data;
+};
+
+export const upsertFamilySettings = async (settings: Record<string, unknown>) => {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await supabase
+    .from('family_settings')
+    .upsert(settings as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Plans (admin)
+export const loadPlans = async () => {
+  if (!isSupabaseConfigured) return [];
+  const { data } = await supabase.from('plans').select('*').order('price', { ascending: true });
+  return (data ?? []) as import('../types').Plan[];
+};
+
+export const adminSavePlan = async (plan: import('../types').Plan | Omit<import('../types').Plan, 'id' | 'created_at'>) => {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await supabase.from('plans').upsert(plan as never).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const adminDeletePlan = async (id: string) => {
+  if (!isSupabaseConfigured) return;
+  await supabase.from('plans').delete().eq('id', id);
+};
+
+// Payment settings (admin)
+export const loadPaymentSettings = async () => {
+  if (!isSupabaseConfigured) return null;
+  const { data } = await supabase.from('payment_settings').select('*').maybeSingle();
+  return data;
+};
+
+export const adminSavePaymentSettings = async (settings: import('../types').PaymentSettings) => {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await supabase
+    .from('payment_settings')
+    .upsert(settings as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Support tickets
+export const createTicket = async (ticket: Record<string, unknown>) => {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await supabase.from('support_tickets').insert([ticket]).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const loadMyTickets = async (familyId: string) => {
+  if (!isSupabaseConfigured) return [];
+  const { data } = await supabase
+    .from('support_tickets')
+    .select('*')
+    .eq('family_id', familyId)
+    .order('created_at', { ascending: false });
+  return (data ?? []) as import('../types').SupportTicket[];
+};
+
+export const loadAllTickets = async () => {
+  if (!isSupabaseConfigured) return [];
+  const { data } = await supabase
+    .from('support_tickets')
+    .select('*')
+    .order('created_at', { ascending: false });
+  return (data ?? []) as import('../types').SupportTicket[];
+};
+
+export const adminReplyTicket = async (id: string, reply: string, status: string) => {
+  if (!isSupabaseConfigured) return;
+  await supabase.from('support_tickets').update({ admin_reply: reply, status }).eq('id', id);
+};
+
+// Locations
+export const upsertLocation = async (loc: Record<string, unknown>) => {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await supabase.from('profile_locations').upsert(loc as never).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const loadFamilyLocations = async (familyId: string) => {
+  if (!isSupabaseConfigured) return [];
+  const { data } = await supabase.from('profile_locations').select('*').eq('family_id', familyId);
+  return (data ?? []) as import('../types').ProfileLocation[];
+};
+
+// Password reset via email OTP (short code)
+export const requestPasswordReset = async (email: string): Promise<void> => {
+  if (!isSupabaseConfigured) throw new Error('Servidor indisponível');
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false, data: { reset_flow: true } },
+  });
+  if (error) throw error;
+};
+
+export const verifyResetCode = async (email: string, code: string) => {
+  if (!isSupabaseConfigured) throw new Error('Servidor indisponível');
+  const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+  if (error) throw error;
+};
+
+export const setNewPassword = async (password: string) => {
+  if (!isSupabaseConfigured) throw new Error('Servidor indisponível');
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+};
+
+// Avatar upload
+export const uploadAvatar = async (file: File, familyId: string, profileId: string): Promise<string | null> => {
+  if (!isSupabaseConfigured) return null;
+  const ext = file.name.includes('.') ? file.name.split('.').pop() : 'jpg';
+  const path = `${familyId}/${profileId}/avatar-${Date.now()}.${ext}`;
+  try {
+    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+    if (error) {
+      console.warn('uploadAvatar failed:', error.message);
+      return null;
+    }
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+    return data.publicUrl;
+  } catch (err) {
+    console.warn('uploadAvatar error:', err);
+    return null;
+  }
+};
+
+// Account deletion (hard delete via Edge Function using service role)
+export const deleteAccount = async (): Promise<void> => {
+  if (!isSupabaseConfigured) throw new Error('Servidor indisponível');
+  const { error } = await supabase.functions.invoke('delete-account', {});
+  if (error) throw error;
+};
+
+// Member count for free-plan limits
+export const countFamilyMembers = async (familyId: string): Promise<number> => {
+  if (!isSupabaseConfigured) return 0;
+  const { data } = await supabase.rpc('family_member_count', { check_family_id: familyId });
+  return Number(data ?? 0);
+};
+
+export const getFamilyMemberCounts = async (
+  familyId: string
+): Promise<{ parents: number; children: number }> => {
+  if (!isSupabaseConfigured) return { parents: 0, children: 0 };
+  const { data } = await supabase.from('profiles').select('role').eq('family_id', familyId);
+  const rows = (data ?? []) as { role?: string }[];
+  return {
+    parents: rows.filter((r) => r.role === 'parent').length,
+    children: rows.filter((r) => r.role === 'child').length,
+  };
+};
+
+export const createCheckout = async (planId: string) => {
+  if (!isSupabaseConfigured) throw new Error('Servidor não configurado');
+  const { data, error } = await supabase.functions.invoke('create-checkout', {
+    body: { plan_id: planId },
+  });
+  if (error) throw error;
+  return data as { url?: string } | null;
+};

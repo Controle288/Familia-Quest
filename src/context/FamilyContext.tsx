@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import {
   supabase,
@@ -10,8 +10,13 @@ import {
   loadUserFamilyState,
   onAuthChange,
   signOutUser,
+  loadFamilySettings,
+  upsertFamilySettings,
+  getCurrentIsAdmin,
   type AuthUser,
 } from '../lib/supabase';
+import { applyThemePref } from '../lib/themes';
+import { FamilySettings } from '../types';
 import { applyLevelUp, canRedeem, applyRedeem } from '../lib/gameLogic';
 import { playComplete, playReward, playLevelUp, playError } from '../lib/sounds';
 import {
@@ -54,6 +59,10 @@ interface FamilyContextType {
   authUser: AuthUser | null;
   isAuthenticated: boolean;
   isSyncing: boolean;
+  familySettings: FamilySettings | null;
+  isAdminUser: boolean;
+  isPremium: boolean;
+  updateFamilySettings: (patch: Partial<FamilySettings>) => Promise<void>;
 
   // Actions
   setActiveTab: (tab: ActiveTab) => void;
@@ -79,6 +88,7 @@ interface FamilyContextType {
 
   // Family Actions
   copyInviteCode: () => void;
+  updateProfile: (profileId: string, patch: Partial<Profile>) => Promise<void>;
   signOut: () => Promise<void>;
   grantAllowance: (profileId: string, amount: number) => Promise<void>;
 }
@@ -99,6 +109,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [redemptions, setRedemptions] = useState<Redemption[]>(() => []);
 
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => []);
+
+  const [familySettings, setFamilySettings] = useState<FamilySettings | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('quest');
   const [parentSubTab, setParentSubTab] = useState<ParentSubTab>('pendentes');
@@ -152,6 +165,45 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [authUser]);
 
+  // Load family settings (plan, theme, toggles) + admin status once a family
+  // is available. Applies the persisted decorative theme.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !authUser || !family?.id) return;
+    let cancelled = false;
+    (async () => {
+      const [fs, admin] = await Promise.all([loadFamilySettings(family.id), getCurrentIsAdmin()]);
+      if (cancelled) return;
+      if (fs) {
+        setFamilySettings(fs as FamilySettings);
+        applyThemePref(fs.theme || 'default', (fs.theme_variant as 'light' | 'dark') || 'light');
+      }
+      setIsAdminUser(Boolean(admin));
+    })().catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [authUser, family?.id]);
+
+  const updateFamilySettings = async (patch: Partial<FamilySettings>) => {
+    if (!family?.id) return;
+    const base: FamilySettings = familySettings ?? {
+      family_id: family.id,
+      plan: 'free',
+      theme: 'default',
+      theme_variant: 'light',
+      schedule_enabled: false,
+      location_enabled: false,
+    };
+    const next: FamilySettings = { ...base, ...patch, family_id: family.id };
+    setFamilySettings(next);
+    try {
+      await upsertFamilySettings(next as unknown as Record<string, unknown>);
+      applyThemePref(next.theme, next.theme_variant);
+    } catch (error) {
+      console.warn('Failed to save family settings:', error);
+    }
+  };
+
   const currentProfile = profiles.find((p) => p.id === currentProfileId) || profiles[0];
 
   const addToast = (
@@ -176,7 +228,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCurrentProfileId(profileId);
       addToast(
         `Perfil alternado para ${target.full_name}`,
-        `Modo: ${target.role === 'parent' ? 'Pai/Mãe' : 'Filho/Filha'}`,
+        `Modo: ${target.role === 'parent' ? 'Responsável' : 'Filho(a)'}`,
         'info'
       );
     }
@@ -287,6 +339,24 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       supabase.removeChannel(channel);
     };
   }, [authUser, family?.id, refreshFamilyData]);
+
+  // In-app reminders for scheduled tasks (premium). Fires once per task when the
+  // reminder window opens, so the family isn't spammed on every re-render.
+  const remindedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    const now = Date.now();
+    tasks.forEach((t) => {
+      if (t.status === 'completed' || !t.due_time || !t.reminder_minutes) return;
+      const due = new Date(t.due_time).getTime();
+      if (Number.isNaN(due)) return;
+      const windowStart = due - t.reminder_minutes * 60 * 1000;
+      if (now >= windowStart && now <= due && !remindedRef.current.has(t.id)) {
+        remindedRef.current.add(t.id);
+        addToast(`Lembrete: ${t.title}`, `Vence em ${new Date(t.due_time).toLocaleString('pt-BR')}`, 'info');
+      }
+    });
+  }, [tasks, isSupabaseConfigured, addToast]);
 
   /**
    * Persist a set of writes to Supabase and, on failure, roll the UI back to
@@ -676,6 +746,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     );
   };
 
+  const updateProfile = async (profileId: string, patch: Partial<Profile>) => {
+    setProfiles((prev) => prev.map((p) => (p.id === profileId ? { ...p, ...patch } : p)));
+    if (isSupabaseConfigured) {
+      try {
+        await syncSupabaseUpdate('profiles', profileId, patch as Record<string, unknown>);
+      } catch (error) {
+        console.warn('Failed to update profile:', error);
+      }
+    }
+  };
+
   const signOut = async () => {
     if (!isSupabaseConfigured) {
       setShowOnboarding(false);
@@ -756,6 +837,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         authUser,
         isAuthenticated: Boolean(authUser),
         isSyncing,
+        familySettings,
+        isAdminUser,
+        isPremium: familySettings?.plan === 'premium',
+        updateFamilySettings,
         setActiveTab,
         setParentSubTab,
         switchProfile,
@@ -773,6 +858,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         createReward,
         toggleRewardAvailability,
         copyInviteCode,
+        updateProfile,
         signOut,
         grantAllowance,
       }}
