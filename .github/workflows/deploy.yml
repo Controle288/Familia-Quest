@@ -15,10 +15,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-       - name: Install dependencies (skip Playwright browsers)
-         env:
-           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-         run: npm install
+      - name: Install dependencies (skip Playwright browsers)
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm install
+      - name: Ensure Tailwind native binary (Linux)
+        run: npm install @tailwindcss/oxide-linux-x64-gnu@4.3.3 --no-save
       - name: Build
         run: npm run build
       - name: Deploy to Netlify
