@@ -28,6 +28,7 @@ export interface Profile {
   title?: string;
   level: number;
   xp: number;
+  xp_base: number;
   xp_to_next_level: number;
   balance: number;
   streak_days: number;
@@ -69,6 +70,7 @@ export interface Reward {
   title: string;
   description: string;
   points_cost: number;
+  money_cost: number;
   category: RewardCategory;
   image_url: string;
   is_available: boolean;
