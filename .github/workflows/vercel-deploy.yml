@@ -14,7 +14,9 @@ jobs:
         with:
           node-version: '18'
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+      - name: Ensure Tailwind native binary (Linux)
+        run: npm install @tailwindcss/oxide-linux-x64-gnu@4.3.3 --no-save
       - name: Build
         run: npm run build
       - name: Deploy to Vercel
