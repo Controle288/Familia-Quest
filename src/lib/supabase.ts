@@ -483,9 +483,9 @@ export const adminDeletePlan = async (id: string) => {
 
 // Payment settings (admin)
 export const loadPaymentSettings = async () => {
-  if (!isSupabaseConfigured) return null;
+  if (!isSupabaseConfigured) return { provider: 'stripe' } as import('../types').PaymentSettings;
   const { data } = await supabase.from('payment_settings').select('*').maybeSingle();
-  return data;
+  return (data as import('../types').PaymentSettings) ?? ({ provider: 'stripe' } as import('../types').PaymentSettings);
 };
 
 export const adminSavePaymentSettings = async (settings: import('../types').PaymentSettings) => {
