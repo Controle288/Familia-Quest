@@ -55,6 +55,19 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
     .filter((p) => p.role === 'child')
     .reduce((acc, curr) => acc + curr.xp, 0);
 
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  startOfWeek.setHours(0, 0, 0, 0);
+  const weeklyPoints = tasks
+    .filter(
+      (t) =>
+        t.status === 'completed' &&
+        t.approved_at != null &&
+        new Date(t.approved_at) >= startOfWeek
+    )
+    .reduce((acc, curr) => acc + (curr.points ?? 0), 0);
+
   const pendingApprovalTasks = tasks.filter((t) => t.status === 'waiting_approval');
   const completedTasks = tasks.filter((t) => t.status === 'completed');
   const totalTasksCount = tasks.length;
@@ -134,9 +147,9 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({
             <span className="font-heading text-3xl md:text-4xl font-bold text-[#0b1c30]">
               {totalPoints.toLocaleString('pt-BR')}
             </span>
-            <span className="text-xs font-bold text-[#6b38d4] bg-violet-50 px-2 py-0.5 rounded-full">
-              +150 esta semana
-            </span>
+              <span className="text-xs font-bold text-[#6b38d4] bg-violet-50 px-2 py-0.5 rounded-full">
+                +{weeklyPoints} esta semana
+              </span>
           </div>
         </div>
 
