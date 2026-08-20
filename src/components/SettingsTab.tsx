@@ -1,10 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Camera, Trash2, Sparkles, MapPin, Clock, Crown } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
-import { uploadAvatar, deleteAccount, loadPlans, createCheckout } from '../lib/supabase';
+import { uploadAvatar, deleteAccount, loadPlans, createCheckout, createTicket, loadMyTickets } from '../lib/supabase';
 import { ThemePicker } from './ThemePicker';
 import { LocationPanel } from './LocationPanel';
-import { Plan } from '../types';
+import { Plan, SupportTicket } from '../types';
 
 export const SettingsTab: React.FC = () => {
   const {
@@ -27,9 +27,45 @@ export const SettingsTab: React.FC = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
 
+  const isGuardian = currentProfile?.role === 'parent';
+
+  // Suporte / tickets (somente responsáveis)
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [ticketMsg, setTicketMsg] = useState('');
+  const [ticketBusy, setTicketBusy] = useState(false);
+
+  const refreshTickets = React.useCallback(async () => {
+    if (!family?.id) return;
+    try {
+      setTickets(await loadMyTickets(family.id));
+    } catch {
+      /* ignora falha de carregamento */
+    }
+  }, [family?.id]);
+
   useEffect(() => {
     loadPlans().then(setPlans);
-  }, []);
+    if (isGuardian) refreshTickets();
+  }, [isGuardian, refreshTickets]);
+
+  const sendTicket = async () => {
+    if (!family || !currentProfile || !ticketMsg.trim()) return;
+    setTicketBusy(true);
+    try {
+      await createTicket({
+        family_id: family.id,
+        author_profile_id: currentProfile.id,
+        message: ticketMsg.trim(),
+      });
+      setTicketMsg('');
+      addToast('Ticket enviado!', 'Nossa equipe responderá em breve.', 'success');
+      await refreshTickets();
+    } catch (err) {
+      addToast('Erro ao enviar ticket', (err as Error).message, 'error');
+    } finally {
+      setTicketBusy(false);
+    }
+  };
 
   const startCheckout = async (planId: string) => {
     setCheckoutBusy(planId);
@@ -124,49 +160,60 @@ export const SettingsTab: React.FC = () => {
         </div>
       </section>
 
-      {/* Plano */}
-      <section className="rounded-3xl border border-indigo-100 bg-white/80 p-5 shadow-sm dark:bg-slate-900/70">
-        <div className="flex items-center justify-between">
-          <h3 className="font-heading text-lg font-bold text-slate-800 dark:text-white">Plano</h3>
-          <span className={`rounded-full px-3 py-1 text-xs font-bold ${isPremium ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-            {isPremium ? 'Premium' : 'Grátis'}
-          </span>
-        </div>
-        <p className="mt-2 text-sm text-slate-500">
-          {isPremium
-            ? 'Você tem acesso a todos os temas, horários e localização.'
-            : 'No plano grátis: até 2 responsáveis ou 1 responsável + 2 filhos, sem temas premium.'}
-        </p>
-        <div className="mt-4 space-y-3">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50/50 p-3"
-            >
-              <div>
-                <p className="font-semibold text-slate-800 dark:text-white">{plan.name}</p>
-                <p className="text-xs text-slate-500">
-                  R$ {plan.price} / {plan.interval === 'month' ? 'mês' : plan.interval === 'year' ? 'ano' : 'único'}
-                </p>
+      {/* Plano — somente responsáveis */}
+      {isGuardian && (
+        <section className="rounded-3xl border border-indigo-100 bg-white/80 p-5 shadow-sm dark:bg-slate-900/70">
+          <div className="flex items-center justify-between">
+            <h3 className="font-heading text-lg font-bold text-slate-800 dark:text-white">Plano</h3>
+            <span className={`rounded-full px-3 py-1 text-xs font-bold ${isPremium ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+              {isPremium ? 'Premium' : 'Grátis'}
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-slate-500">
+            {isPremium
+              ? 'Você tem acesso a todos os temas, horários e localização.'
+              : 'No plano grátis: até 2 responsáveis ou 1 responsável + 2 filhos, sem temas premium.'}
+          </p>
+          <div className="mt-4 space-y-3">
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50/50 p-3"
+              >
+                <div>
+                  <p className="font-semibold text-slate-800 dark:text-white">{plan.name}</p>
+                  <p className="text-xs text-slate-500">
+                    R$ {plan.price} / {plan.interval === 'month' ? 'mês' : plan.interval === 'year' ? 'ano' : 'único'}
+                  </p>
+                </div>
+                {isPremium ? (
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">Ativo</span>
+                    <button
+                      onClick={() => startCheckout(plan.id)}
+                      disabled={checkoutBusy === plan.id}
+                      className="flex items-center gap-1.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 px-4 py-2 text-sm font-bold text-white shadow hover:opacity-90 disabled:opacity-60"
+                    >
+                      <Crown className="w-4 h-4" /> {checkoutBusy === plan.id ? 'Aguarde…' : 'Renovar'}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => startCheckout(plan.id)}
+                    disabled={checkoutBusy === plan.id}
+                    className="flex items-center gap-1.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 px-4 py-2 text-sm font-bold text-white shadow hover:opacity-90 disabled:opacity-60"
+                  >
+                    <Crown className="w-4 h-4" /> {checkoutBusy === plan.id ? 'Aguarde…' : 'Assinar'}
+                  </button>
+                )}
               </div>
-              {isPremium ? (
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">Ativo</span>
-              ) : (
-                <button
-                  onClick={() => startCheckout(plan.id)}
-                  disabled={checkoutBusy === plan.id}
-                  className="flex items-center gap-1.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 px-4 py-2 text-sm font-bold text-white shadow hover:opacity-90 disabled:opacity-60"
-                >
-                  <Crown className="w-4 h-4" /> {checkoutBusy === plan.id ? 'Aguarde…' : 'Assinar'}
-                </button>
-              )}
-            </div>
-          ))}
-          {plans.length === 0 && (
-            <p className="text-sm text-slate-400">Nenhum plano disponível no momento.</p>
-          )}
-        </div>
-      </section>
+            ))}
+            {plans.length === 0 && (
+              <p className="text-sm text-slate-400">Nenhum plano disponível no momento.</p>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Temas */}
       <section className="rounded-3xl border border-indigo-100 bg-white/80 p-5 shadow-sm dark:bg-slate-900/70">
@@ -206,6 +253,61 @@ export const SettingsTab: React.FC = () => {
       </section>
 
       {showLocation && <LocationPanel onClose={() => setShowLocation(false)} />}
+
+      {/* Suporte / Tickets — somente responsáveis */}
+      {isGuardian && (
+        <section className="rounded-3xl border border-indigo-100 bg-white/80 p-5 shadow-sm dark:bg-slate-900/70 space-y-3">
+          <h3 className="font-heading text-lg font-bold text-slate-800 dark:text-white">Suporte</h3>
+          <p className="text-sm text-slate-500">
+            Precisa de ajuda? Abra um ticket e nossa equipe responderá por aqui.
+          </p>
+
+          <div className="space-y-2">
+            {tickets.map((t) => (
+              <div key={t.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                    {t.status === 'open'
+                      ? 'Aberto'
+                      : t.status === 'in_progress'
+                      ? 'Em andamento'
+                      : t.status === 'answered'
+                      ? 'Respondido'
+                      : 'Concluído'}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-slate-800 dark:text-white">{t.message}</p>
+                {t.admin_reply && (
+                  <p className="mt-2 rounded-xl bg-indigo-50 p-2 text-sm text-[#3525cd]">
+                    <span className="font-semibold">Resposta: </span>
+                    {t.admin_reply}
+                  </p>
+                )}
+              </div>
+            ))}
+            {tickets.length === 0 && (
+              <p className="text-sm text-slate-400">Nenhum ticket ainda. Envie o primeiro abaixo.</p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={ticketMsg}
+              onChange={(e) => setTicketMsg(e.target.value)}
+              placeholder="Descreva sua dúvida ou problema..."
+              rows={3}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium focus:border-[#3525cd] focus:ring-2 focus:ring-indigo-100 dark:bg-slate-800 dark:text-white"
+            />
+            <button
+              onClick={sendTicket}
+              disabled={ticketBusy || !ticketMsg.trim()}
+              className="self-start rounded-2xl bg-[#3525cd] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#2e1fb5] disabled:opacity-60"
+            >
+              {ticketBusy ? 'Enviando…' : 'Enviar ticket'}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Conta */}
       <section className="rounded-3xl border border-rose-100 bg-white/80 p-5 shadow-sm">
