@@ -226,14 +226,21 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const switchProfile = (profileId: string) => {
     const target = profiles.find((p) => p.id === profileId);
-    if (target) {
-      setCurrentProfileId(profileId);
-      addToast(
-        `Perfil alternado para ${target.full_name}`,
-        `Modo: ${relationshipLabel(target.relationship) || (target.role === 'parent' ? 'Responsável' : 'Filho(a)')}`,
-        'info'
-      );
+    if (!target) return;
+
+    // Cada usuário só pode usar o próprio perfil (mesmo user_id do login).
+    // Isso impede que um membro (ex.: uma criança) acesse o painel de outro.
+    if (target.user_id && authUser && target.user_id !== authUser.id) {
+      addToast('Acesso negado', 'Você só pode usar o seu próprio perfil.', 'warning');
+      return;
     }
+
+    setCurrentProfileId(profileId);
+    addToast(
+      `Perfil alternado para ${target.full_name}`,
+      `Modo: ${relationshipLabel(target.relationship) || (target.role === 'parent' ? 'Responsável' : 'Filho(a)')}`,
+      'info'
+    );
   };
 
   const applyFamilySession = (

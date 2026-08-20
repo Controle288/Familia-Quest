@@ -14,10 +14,14 @@ export const Header: React.FC = () => {
     setShowOnboarding, 
     signOut,
     isAuthenticated,
+    authUser,
     addToast,
     refreshFamilyData,
     isSyncing,
   } = useFamily();
+
+  // Cada usuário só pode alternar entre os perfis do PRÓPRIO login.
+  const myProfiles = profiles.filter((p) => p.user_id && p.user_id === authUser?.id);
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -32,7 +36,7 @@ export const Header: React.FC = () => {
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="flex items-center gap-2.5 p-1 rounded-full hover:bg-indigo-50/80 transition-all focus:outline-none"
-            title="Alternar Perfil"
+            title="Perfil"
           >
             <div className="relative">
               {(() => {
@@ -78,29 +82,31 @@ export const Header: React.FC = () => {
           </button>
         </div>
 
-        {/* Center / Quick Role Toggle for Testing */}
-        <div className="hidden xl:flex items-center bg-indigo-50/90 p-1 rounded-full border border-indigo-100/80 shadow-xs">
-          {profiles.map((p) => {
-            const isSelected = p.id === currentProfile.id;
-            return (
-              <button
-                key={p.id}
-                onClick={() => switchProfile(p.id)}
-                className={`px-3 py-1 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 ${
-                  isSelected
-                    ? 'bg-[#3525cd] text-white shadow-sm'
-                    : 'text-indigo-900 hover:text-[#3525cd] hover:bg-white/60'
-                }`}
-              >
-                {p.relationship
-                  ? `${RELATIONSHIP_META[p.relationship].emoji} ${RELATIONSHIP_META[p.relationship].label}`
-                  : p.role === 'parent'
-                  ? '🛡️ Pai'
-                  : `⭐ ${p.full_name}`}
-              </button>
-            );
-          })}
-        </div>
+        {/* Center / Quick profile switch — only the user's own profiles */}
+        {myProfiles.length > 1 && (
+          <div className="hidden xl:flex items-center bg-indigo-50/90 p-1 rounded-full border border-indigo-100/80 shadow-xs">
+            {myProfiles.map((p) => {
+              const isSelected = p.id === currentProfile.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => switchProfile(p.id)}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 ${
+                    isSelected
+                      ? 'bg-[#3525cd] text-white shadow-sm'
+                      : 'text-indigo-900 hover:text-[#3525cd] hover:bg-white/60'
+                  }`}
+                >
+                  {p.relationship
+                    ? `${RELATIONSHIP_META[p.relationship].emoji} ${RELATIONSHIP_META[p.relationship].label}`
+                    : p.role === 'parent'
+                    ? '🛡️ Pai'
+                    : `⭐ ${p.full_name}`}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="hidden md:flex items-center gap-2 rounded-full border border-indigo-100 bg-white/70 px-3 py-1.5 shadow-sm">
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Status</span>
@@ -210,7 +216,7 @@ export const Header: React.FC = () => {
             )}
 
             <div className="space-y-2">
-              {profiles.map((p) => {
+              {myProfiles.map((p) => {
                 const isActive = p.id === currentProfile.id;
                 return (
                   <button
