@@ -232,8 +232,7 @@ export const AuthOnboarding: React.FC = () => {
           </div>
         )}
 
-        {isSupabaseConfigured && (
-          <section className="w-full space-y-3">
+        <section className="w-full space-y-3">
             <div className="flex rounded-full bg-slate-100 p-1">
               <button
                 onClick={() => setMode('create')}
@@ -356,7 +355,6 @@ export const AuthOnboarding: React.FC = () => {
               </button>
             </div>
           </section>
-        )}
       </div>
 
       {showForgot && <ForgotPassword onClose={() => setShowForgot(false)} />}
