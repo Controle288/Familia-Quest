@@ -92,6 +92,7 @@ interface FamilyContextType {
   updateProfile: (profileId: string, patch: Partial<Profile>) => Promise<void>;
   signOut: () => Promise<void>;
   grantAllowance: (profileId: string, amount: number) => Promise<void>;
+  refreshFamilyData: () => Promise<void>;
 }
 
 const FamilyContext = createContext<FamilyContextType | undefined>(undefined);
@@ -862,6 +863,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateProfile,
         signOut,
         grantAllowance,
+        refreshFamilyData,
       }}
     >
       {children}
