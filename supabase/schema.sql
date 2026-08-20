@@ -93,6 +93,10 @@ create index if not exists idx_redemptions_family_id on public.redemptions(famil
 create index if not exists idx_activity_logs_family_id on public.activity_logs(family_id);
 
 alter table public.families enable row level security;
+-- Relação familiar específica do perfil (mae, pai, avo, outro, filho).
+alter table public.profiles add column if not exists relationship text
+  check (relationship in ('mae', 'pai', 'avo', 'outro', 'filho'));
+
 alter table public.profiles enable row level security;
 alter table public.tasks enable row level security;
 alter table public.rewards enable row level security;

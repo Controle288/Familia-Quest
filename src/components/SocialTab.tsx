@@ -4,6 +4,7 @@ import { useFamily } from '../context/FamilyContext';
 import { BadgeShelf } from './BadgeShelf';
 import { MotionList, MotionItem } from './motion';
 import { BADGES, familyEarnedCount } from '../lib/badges';
+import { relationshipLabel, RELATIONSHIP_META } from '../lib/avatars';
 
 export const SocialTab: React.FC = () => {
   const { profiles, family, copyInviteCode, activityLogs, tasks } = useFamily();
@@ -69,18 +70,28 @@ export const SocialTab: React.FC = () => {
                     {idx + 1}º
                   </div>
 
-                  <img
-                    src={p.avatar_url}
-                    alt={p.full_name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-xs"
-                  />
+                  {(() => {
+                    const relColor = p.relationship
+                      ? RELATIONSHIP_META[p.relationship].color
+                      : p.role === 'parent'
+                      ? '#4f46e5'
+                      : '#3525cd';
+                    return (
+                      <img
+                        src={p.avatar_url}
+                        alt={p.full_name}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-xs"
+                        style={{ boxShadow: `0 0 0 2px ${relColor}` }}
+                      />
+                    );
+                  })()}
 
                   <div>
                     <h4 className="font-heading font-bold text-slate-900 text-sm md:text-base">
                       {p.full_name}
                     </h4>
                     <p className="text-xs text-slate-500">
-                      Nível {p.level} • {p.title || (p.role === 'parent' ? 'Responsável' : 'Aventureiro')}
+                      Nível {p.level} • {p.title || relationshipLabel(p.relationship) || (p.role === 'parent' ? 'Responsável' : 'Aventureiro')}
                     </p>
                     <BadgeShelf profile={p} ctx={ctx} className="mt-1.5" />
                   </div>

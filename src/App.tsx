@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { FamilyProvider, useFamily } from './context/FamilyContext';
 import { isMuted, setMuted } from './lib/sounds';
+import { relationshipLabel } from './lib/avatars';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { ParentDashboard } from './components/ParentDashboard';
@@ -90,7 +91,7 @@ const MainAppContent: React.FC = () => {
               </button>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-100">Perfil</p>
               <p className="mt-2 font-heading text-lg font-bold">{currentProfile.full_name}</p>
-              <p className="text-xs text-indigo-100">{currentProfile.role === 'parent' ? 'Responsável' : 'Filho(a)'}</p>
+              <p className="text-xs text-indigo-100">{relationshipLabel(currentProfile.relationship) || (currentProfile.role === 'parent' ? 'Responsável' : 'Filho(a)')}</p>
             </div>
           </aside>
 

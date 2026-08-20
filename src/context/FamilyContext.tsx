@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import confetti from 'canvas-confetti';
+import { relationshipLabel } from '../lib/avatars';
 import {
   supabase,
   isSupabaseConfigured,
@@ -228,7 +229,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCurrentProfileId(profileId);
       addToast(
         `Perfil alternado para ${target.full_name}`,
-        `Modo: ${target.role === 'parent' ? 'Responsável' : 'Filho(a)'}`,
+        `Modo: ${relationshipLabel(target.relationship) || (target.role === 'parent' ? 'Responsável' : 'Filho(a)')}`,
         'info'
       );
     }

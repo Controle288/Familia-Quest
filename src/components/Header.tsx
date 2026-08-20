@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Bell, Flame, ChevronDown, Check, UserCheck, Sparkles, RefreshCw, LogOut } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { ThemeToggle } from './ThemeToggle';
+import { relationshipLabel, RELATIONSHIP_META } from '../lib/avatars';
 
 export const Header: React.FC = () => {
   const { 
@@ -32,19 +33,25 @@ export const Header: React.FC = () => {
             title="Alternar Perfil"
           >
             <div className="relative">
-              {currentProfile.role === 'parent' ? (
-                <div className="w-10 h-10 rounded-full bg-[#4f46e5] text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-indigo-200">
-                  FS
-                </div>
-              ) : (
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#3525cd] shadow-md bg-white">
-                  <img
-                    src={currentProfile.avatar_url}
-                    alt={currentProfile.full_name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
+              {(() => {
+                const relColor = currentProfile.relationship
+                  ? RELATIONSHIP_META[currentProfile.relationship].color
+                  : currentProfile.role === 'parent'
+                  ? '#4f46e5'
+                  : '#3525cd';
+                return (
+                  <div
+                    className="w-10 h-10 rounded-full overflow-hidden shadow-md bg-white"
+                    style={{ boxShadow: `0 0 0 2px ${relColor}` }}
+                  >
+                    <img
+                      src={currentProfile.avatar_url}
+                      alt={currentProfile.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                );
+              })()}
               {currentProfile.role === 'child' && (
                 <span className="absolute -bottom-1 -right-1 bg-[#006e4b] text-[#67f4b7] text-[10px] font-bold px-1.5 py-0.2 rounded-full border border-white">
                   L{currentProfile.level}
@@ -60,7 +67,10 @@ export const Header: React.FC = () => {
                 <ChevronDown className="w-3.5 h-3.5 text-indigo-400" />
               </div>
               <span className="text-xs text-slate-500 font-medium">
-                {currentProfile.full_name} ({currentProfile.role === 'parent' ? 'Responsável' : 'Filho(a)'})
+                {currentProfile.full_name} (
+                {relationshipLabel(currentProfile.relationship) ||
+                  (currentProfile.role === 'parent' ? 'Responsável' : 'Filho(a)')}
+                )
               </span>
             </div>
           </button>
@@ -80,7 +90,11 @@ export const Header: React.FC = () => {
                     : 'text-indigo-900 hover:text-[#3525cd] hover:bg-white/60'
                 }`}
               >
-                {p.role === 'parent' ? '🛡️ Pai' : `⭐ ${p.full_name}`}
+                {p.relationship
+                  ? `${RELATIONSHIP_META[p.relationship].emoji} ${RELATIONSHIP_META[p.relationship].label}`
+                  : p.role === 'parent'
+                  ? '🛡️ Pai'
+                  : `⭐ ${p.full_name}`}
               </button>
             );
           })}

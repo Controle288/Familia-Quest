@@ -1,5 +1,7 @@
 export type ProfileRole = 'parent' | 'child';
 
+export type RelationshipType = 'mae' | 'pai' | 'avo' | 'outro' | 'filho';
+
 export type TaskStatus = 'pending' | 'waiting_approval' | 'completed';
 
 export type RewardType = 'xp_and_money' | 'xp_only' | 'money_only';
@@ -24,6 +26,7 @@ export interface Profile {
   name: string;
   full_name: string;
   role: ProfileRole;
+  relationship?: RelationshipType;
   avatar_url: string;
   title?: string;
   level: number;

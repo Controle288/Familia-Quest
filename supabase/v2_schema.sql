@@ -89,6 +89,10 @@ alter table public.tasks add column if not exists reminder_minutes integer defau
 -- Preferência de tema por perfil (opcional).
 alter table public.profiles add column if not exists theme_pref text;
 
+-- Relação familiar específica do perfil (mae, pai, avo, outro, filho).
+alter table public.profiles add column if not exists relationship text
+  check (relationship in ('mae', 'pai', 'avo', 'outro', 'filho'));
+
 -- ---------------------------------------------------------------------------
 -- Índices.
 -- ---------------------------------------------------------------------------
