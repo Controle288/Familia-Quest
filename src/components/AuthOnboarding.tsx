@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, PlusCircle, Key, Mail, Lock, LogIn, Users, ArrowLeft } from 'lucide-react';
+import { Sparkles, PlusCircle, KeyRound, Mail, LockKeyhole, ArrowRightCircle, UsersRound, UserPlus, ArrowLeft, X, type LucideIcon } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import {
   createFamilyWithProfiles,
@@ -16,7 +16,6 @@ import {
 } from '../lib/supabase';
 import {
   avatarForRelationship,
-  relationshipLabel,
   RELATIONSHIP_META,
   GUARDIAN_RELATIONSHIPS,
   ALL_RELATIONSHIPS,
@@ -24,9 +23,61 @@ import {
 } from '../lib/avatars';
 import { Profile } from '../types';
 import { ForgotPassword } from './ForgotPassword';
+import { MotionList, MotionItem } from './motion';
 
 type Mode = 'create' | 'login';
 type JoinStep = 'code' | 'select';
+
+const FieldIcon: React.FC<{ icon: LucideIcon; color: string; className?: string }> = ({
+  icon: Icon,
+  color,
+  className = '',
+}) => (
+  <span
+    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${className}`}
+    style={{ background: `${color}1a`, color }}
+  >
+    <Icon className="w-4 h-4" />
+  </span>
+);
+
+const AuthField: React.FC<{
+  icon: LucideIcon;
+  color: string;
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}> = ({ icon, color, type = 'text', value, onChange, placeholder }) => (
+  <div className="relative">
+    <div className="absolute left-3 top-1/2 -translate-y-1/2">
+      <FieldIcon icon={icon} color={color} />
+    </div>
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full h-12 pl-14 pr-4 bg-white rounded-2xl border border-slate-200 focus:border-[#3525cd] focus:ring-2 focus:ring-indigo-100 text-sm font-medium text-slate-900 placeholder:text-slate-400 transition-all"
+    />
+  </div>
+);
+
+const PrimaryButton: React.FC<{
+  onClick: () => void;
+  disabled?: boolean;
+  icon: LucideIcon;
+  children: React.ReactNode;
+}> = ({ onClick, disabled, icon: Icon, children }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className="w-full h-12 bg-[#3525cd] text-white font-heading font-bold text-sm rounded-full shadow-[0px_4px_20px_rgba(79,70,229,0.25)] hover:bg-[#2e1fb5] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+  >
+    <Icon className="w-5 h-5" />
+    {children}
+  </button>
+);
 
 export const AuthOnboarding: React.FC = () => {
   const { applyFamilySession, setShowOnboarding, addToast } = useFamily();
@@ -237,108 +288,75 @@ export const AuthOnboarding: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#f8f9ff] overflow-y-auto flex flex-col items-center justify-between px-5 py-8 md:py-12">
+    <div className="fixed inset-0 z-50 bg-[#f8f9ff] overflow-y-auto">
       <button
         onClick={() => setShowOnboarding(false)}
-        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition-colors"
+        className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/80 text-slate-500 hover:bg-white hover:text-slate-700 shadow-sm flex items-center justify-center transition-colors"
         title="Fechar"
       >
-        <LogIn className="w-5 h-5 rotate-180" />
+        <X className="w-5 h-5" />
       </button>
 
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-violet-200 rounded-full mix-blend-multiply filter blur-3xl opacity-40" />
+        <div className="absolute top-[-12%] right-[-6%] w-[28rem] h-[28rem] bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-float" />
+        <div className="absolute bottom-[-14%] left-[-8%] w-[26rem] h-[26rem] bg-violet-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-float" style={{ animationDelay: '1.2s' }} />
+        <div className="absolute top-[30%] left-[60%] w-72 h-72 bg-fuchsia-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float" style={{ animationDelay: '2.4s' }} />
       </div>
 
-      <div className="w-full max-w-md mx-auto my-auto flex flex-col items-center text-center space-y-6">
-        <header className="flex flex-col items-center">
-          <div className="w-20 h-20 bg-[#4f46e5] rounded-3xl flex items-center justify-center text-white mb-4 shadow-[0px_12px_32px_rgba(79,70,229,0.2)]">
-            <Sparkles className="w-10 h-10 fill-current text-white" />
-          </div>
-          <h1 className="font-heading text-4xl font-extrabold text-[#3525cd] tracking-tight">
-            FamilyQuest
-          </h1>
-          <p className="text-slate-600 text-base mt-2 max-w-xs">
-            Transforme a rotina em uma aventura épica para toda a família.
-          </p>
-        </header>
+      <div className="min-h-screen w-full flex items-center justify-center px-4 py-10">
+        <MotionList className="glass-card w-full max-w-md rounded-[2rem] p-6 md:p-8 shadow-2xl border border-white/60 space-y-5">
+          <MotionItem>
+            <header className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-[#4f46e5] to-[#8455ef] rounded-3xl flex items-center justify-center text-white mb-4 shadow-[0px_12px_32px_rgba(79,70,229,0.3)]">
+                <Sparkles className="w-10 h-10 fill-current text-white" />
+              </div>
+              <h1 className="font-heading text-4xl font-extrabold text-[#3525cd] tracking-tight">
+                FamilyQuest
+              </h1>
+              <p className="text-slate-600 text-base mt-2 max-w-xs">
+                Transforme a rotina em uma aventura épica para toda a família.
+              </p>
+            </header>
+          </MotionItem>
 
-        {!isSupabaseConfigured && (
-          <div className="w-full rounded-2xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
-            O servidor não está configurado. Entre em contato com o administrador para usar o app.
-          </div>
-        )}
+          {!isSupabaseConfigured && (
+            <MotionItem>
+              <div className="w-full rounded-2xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+                O servidor não está configurado. Entre em contato com o administrador para usar o app.
+              </div>
+            </MotionItem>
+          )}
 
-        <section className="w-full space-y-3">
+          <MotionItem>
             <div className="flex rounded-full bg-slate-100 p-1">
               <button
                 onClick={() => setMode('create')}
-                className={`flex-1 h-9 rounded-full text-sm font-bold transition-all ${mode === 'create' ? 'bg-white text-[#3525cd] shadow' : 'text-slate-500'}`}
+                className={`flex-1 h-10 rounded-full text-sm font-bold transition-all ${mode === 'create' ? 'bg-white text-[#3525cd] shadow' : 'text-slate-500'}`}
               >
                 Criar conta
               </button>
               <button
                 onClick={() => setMode('login')}
-                className={`flex-1 h-9 rounded-full text-sm font-bold transition-all ${mode === 'login' ? 'bg-white text-[#3525cd] shadow' : 'text-slate-500'}`}
+                className={`flex-1 h-10 rounded-full text-sm font-bold transition-all ${mode === 'login' ? 'bg-white text-[#3525cd] shadow' : 'text-slate-500'}`}
               >
                 Entrar
               </button>
             </div>
+          </MotionItem>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                <Mail className="w-4 h-4" />
-              </div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="E-mail"
-                className="w-full h-12 pl-11 pr-4 bg-white rounded-2xl border border-slate-200 focus:border-[#3525cd] focus:ring-2 focus:ring-indigo-100 text-sm font-medium text-slate-900 placeholder:text-slate-400"
-              />
-            </div>
+          <MotionItem>
+            <AuthField icon={Mail} color="#3525cd" type="email" value={email} onChange={setEmail} placeholder="E-mail" />
+          </MotionItem>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                <Lock className="w-4 h-4" />
-              </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Senha"
-                className="w-full h-12 pl-11 pr-4 bg-white rounded-2xl border border-slate-200 focus:border-[#3525cd] focus:ring-2 focus:ring-indigo-100 text-sm font-medium text-slate-900 placeholder:text-slate-400"
-              />
-            </div>
+          <MotionItem>
+            <AuthField icon={LockKeyhole} color="#8455ef" type="password" value={password} onChange={setPassword} placeholder="Senha" />
+          </MotionItem>
 
-            {mode === 'create' ? (
-              <>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <input
-                    type="text"
-                    value={familyName}
-                    onChange={(e) => setFamilyName(e.target.value)}
-                    placeholder="Nome da família (ex: Família Silva)"
-                    className="w-full h-12 pl-11 pr-4 bg-white rounded-2xl border border-slate-200 focus:border-[#3525cd] focus:ring-2 focus:ring-indigo-100 text-sm font-medium text-slate-900 placeholder:text-slate-400"
-                  />
-                </div>
-
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <input
-                    type="text"
-                    value={parentName}
-                    onChange={(e) => setParentName(e.target.value)}
-                    placeholder="Seu nome (responsável)"
-                    className="w-full h-12 pl-11 pr-4 bg-white rounded-2xl border border-slate-200 focus:border-[#3525cd] focus:ring-2 focus:ring-indigo-100 text-sm font-medium text-slate-900 placeholder:text-slate-400"
-                  />
-                </div>
+          {mode === 'create' ? (
+            <MotionItem>
+              <div className="space-y-3">
+                <AuthField icon={UsersRound} color="#10b981" value={familyName} onChange={setFamilyName} placeholder="Nome da família (ex: Família Silva)" />
+                <AuthField icon={UserPlus} color="#f59e0b" value={parentName} onChange={setParentName} placeholder="Seu nome (responsável)" />
 
                 <div className="rounded-2xl bg-white border border-slate-200 p-4">
                   <p className="text-xs font-semibold text-slate-500 mb-3 text-left">
@@ -372,49 +390,49 @@ export const AuthOnboarding: React.FC = () => {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleCreateAccount}
-                  disabled={isBusy}
-                  className="w-full h-12 bg-[#3525cd] text-white font-heading font-bold text-sm rounded-full shadow-[0px_4px_20px_rgba(79,70,229,0.2)] hover:bg-[#2e1fb5] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                >
-                  <PlusCircle className="w-5 h-5" />
+                <PrimaryButton onClick={handleCreateAccount} disabled={isBusy} icon={UserPlus}>
                   {isBusy ? 'Aguarde...' : 'Criar Conta e Família'}
-                </button>
+                </PrimaryButton>
 
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 text-center">
                   As crianças entram com o código de convite que você receberá.
                 </p>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={handleLogin}
-                  disabled={isBusy}
-                  className="w-full h-12 bg-[#3525cd] text-white font-heading font-bold text-sm rounded-full shadow-[0px_4px_20px_rgba(79,70,229,0.2)] hover:bg-[#2e1fb5] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                >
-                  <LogIn className="w-5 h-5" />
+              </div>
+            </MotionItem>
+          ) : (
+            <MotionItem>
+              <div className="space-y-3">
+                <PrimaryButton onClick={handleLogin} disabled={isBusy} icon={ArrowRightCircle}>
                   {isBusy ? 'Aguarde...' : 'Entrar'}
-                </button>
+                </PrimaryButton>
 
                 <button
                   onClick={() => setShowForgot(true)}
-                  className="text-sm font-semibold text-[#3525cd] hover:underline"
+                  className="w-full text-sm font-semibold text-[#3525cd] hover:underline"
                 >
                   Esqueci a senha
                 </button>
-              </>
-            )}
+              </div>
+            </MotionItem>
+          )}
+
+          <MotionItem>
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">ou</span>
+              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+            </div>
 
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                <Key className="w-4 h-4" />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                <FieldIcon icon={KeyRound} color="#d946ef" />
               </div>
               <input
                 type="text"
                 value={inviteCodeInput}
                 onChange={(e) => setInviteCodeInput(e.target.value)}
                 placeholder="Entrar com código de convite"
-                className="w-full h-12 pl-11 pr-24 bg-white rounded-full border border-slate-200 focus:border-[#3525cd] focus:ring-2 focus:ring-indigo-100 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-xs"
+                className="w-full h-12 pl-14 pr-24 bg-white rounded-full border border-slate-200 focus:border-[#3525cd] focus:ring-2 focus:ring-indigo-100 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-xs transition-all"
               />
               <button
                 onClick={handleLookupFamily}
@@ -424,58 +442,63 @@ export const AuthOnboarding: React.FC = () => {
                 Entrar
               </button>
             </div>
-          </section>
+          </MotionItem>
+        </MotionList>
       </div>
 
       {showForgot && <ForgotPassword onClose={() => setShowForgot(false)} />}
 
       {joinStep === 'select' && joinFamily && (
-        <div className="fixed inset-0 z-[60] bg-[#f8f9ff] overflow-y-auto flex flex-col items-center justify-center px-5 py-8">
+        <div className="fixed inset-0 z-[60] bg-[#f8f9ff]/95 backdrop-blur-sm overflow-y-auto flex flex-col items-center justify-center px-5 py-10">
           <button
             onClick={() => {
               setJoinStep('code');
               setJoinFamily(null);
             }}
-            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition-colors"
+            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/80 text-slate-500 hover:bg-white hover:text-slate-700 shadow-sm flex items-center justify-center transition-colors"
             title="Voltar"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          <div className="w-full max-w-md mx-auto flex flex-col items-center text-center space-y-6">
-            <header className="flex flex-col items-center">
-              <h2 className="font-heading text-2xl font-extrabold text-[#3525cd]">
-                Como você entra?
-              </h2>
-              <p className="text-slate-600 text-sm mt-2 max-w-xs">
-                Escolha seu papel na família <span className="font-semibold">{joinFamily.name}</span>.
-              </p>
-            </header>
+          <MotionList className="glass-card w-full max-w-md rounded-[2rem] p-6 md:p-8 shadow-2xl border border-white/60 space-y-6">
+            <MotionItem>
+              <header className="flex flex-col items-center text-center">
+                <h2 className="font-heading text-2xl font-extrabold text-[#3525cd]">
+                  Como você entra?
+                </h2>
+                <p className="text-slate-600 text-sm mt-2 max-w-xs">
+                  Escolha seu papel na família <span className="font-semibold">{joinFamily.name}</span>.
+                </p>
+              </header>
+            </MotionItem>
 
-            <div className="w-full grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {ALL_RELATIONSHIPS.map((rel) => {
-                const meta = RELATIONSHIP_META[rel];
-                return (
-                  <button
-                    key={rel}
-                    type="button"
-                    onClick={() => handleSelectRelationship(rel)}
-                    disabled={isBusy}
-                    className="flex flex-col items-center gap-2 rounded-3xl bg-white border-2 border-slate-100 p-4 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all disabled:opacity-60"
-                  >
-                    <span
-                      className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-slate-50"
-                      style={{ boxShadow: `0 0 0 3px ${meta.color}55` }}
+            <MotionItem>
+              <div className="w-full grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {ALL_RELATIONSHIPS.map((rel) => {
+                  const meta = RELATIONSHIP_META[rel];
+                  return (
+                    <button
+                      key={rel}
+                      type="button"
+                      onClick={() => handleSelectRelationship(rel)}
+                      disabled={isBusy}
+                      className="flex flex-col items-center gap-2 rounded-3xl bg-white border-2 border-slate-100 p-4 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all disabled:opacity-60"
                     >
-                      <img src={avatarForRelationship(rel, 0)} alt={meta.label} className="w-full h-full object-cover" />
-                    </span>
-                    <span className="text-2xl leading-none">{meta.emoji}</span>
-                    <span className="text-sm font-bold text-slate-800">{meta.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                      <span
+                        className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-slate-50"
+                        style={{ boxShadow: `0 0 0 3px ${meta.color}55` }}
+                      >
+                        <img src={avatarForRelationship(rel, 0)} alt={meta.label} className="w-full h-full object-cover" />
+                      </span>
+                      <span className="text-2xl leading-none">{meta.emoji}</span>
+                      <span className="text-sm font-bold text-slate-800">{meta.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </MotionItem>
+          </MotionList>
         </div>
       )}
     </div>
