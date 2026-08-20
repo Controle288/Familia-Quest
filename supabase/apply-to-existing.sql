@@ -11,6 +11,15 @@ alter table public.profiles
 alter table public.rewards
   add column if not exists money_cost numeric not null default 0;
 
+alter table public.family_settings
+  add column if not exists plan_provider text;
+alter table public.family_settings
+  add column if not exists plan_interval text;
+alter table public.family_settings
+  add column if not exists subscription_id text;
+alter table public.family_settings
+  add column if not exists plan_expires_at timestamptz;
+
 -- 2) Funções helper (idempotente)
 create or replace function public.is_family_member(check_family_id text)
 returns boolean

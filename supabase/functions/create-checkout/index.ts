@@ -62,6 +62,7 @@ Deno.serve(async (req) => {
       body.set('line_items[0][price_data][unit_amount]', String(Math.round(Number(plan.price) * 100)));
       if (plan.interval !== 'once') {
         body.set('subscription_data[interval]', plan.interval === 'year' ? 'year' : 'month');
+        body.set('subscription_data[metadata][family_id]', familyId);
       }
 
       const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
@@ -82,6 +83,42 @@ Deno.serve(async (req) => {
     }
 
     // Mercado Pago
+    // Planos recorrentes (month/year) usam a API de Assinaturas (Preapproval),
+    // para que o admin receba as renovações automaticamente. 'once' é avulso.
+    if (plan.interval !== 'once') {
+      const frequency = plan.interval === 'year' ? 12 : 1;
+      const res = await fetch('https://api.mercadopago.com/preapproval', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${settings.secret_key}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reason: plan.name,
+          external_reference: familyId,
+          currency_id: 'BRL',
+          transaction_amount: Number(plan.price),
+          frequency,
+          frequency_type: 'months',
+          back_url: `${origin}/?upgrade=success`,
+          auto_recurring: {
+            frequency,
+            frequency_type: 'months',
+            transaction_amount: Number(plan.price),
+            currency_id: 'BRL',
+            repetitions: undefined,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return new Response(JSON.stringify({ error: data.message ?? 'mercadopago error' }), { status: 400, headers: corsHeaders });
+      }
+      return new Response(JSON.stringify({ url: data.init_point }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
@@ -102,6 +139,7 @@ Deno.serve(async (req) => {
           failure: `${origin}/?upgrade=cancel`,
         },
         auto_return: 'approved',
+        external_reference: familyId,
         metadata: { family_id: familyId },
       }),
     });

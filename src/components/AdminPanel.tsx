@@ -276,6 +276,17 @@ export const AdminPanel: React.FC = () => {
                 <button onClick={handleSavePayment} disabled={paymentLoading} className="fq-btn-primary">
                   {paymentLoading ? 'Salvando…' : 'Salvar'}
                 </button>
+
+                <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+                  <p className="font-semibold text-slate-700 dark:text-slate-200">Webhook (configure no painel do provedor)</p>
+                  <p className="mt-1 break-all font-mono">
+                    {`${import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, '')}/functions/v1/payment-webhook`}
+                  </p>
+                  <p className="mt-2 text-slate-500">
+                    Stripe: eventos de checkout, fatura e assinatura. Mercado Pago: assinaturas (Preapproval) e pagamentos.
+                    Renovações recorrentes atualizam o plano automaticamente.
+                  </p>
+                </div>
               </>
             ) : (
               <p className="text-sm text-slate-400">Carregando…</p>

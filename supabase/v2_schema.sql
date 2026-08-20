@@ -93,6 +93,12 @@ alter table public.profiles add column if not exists theme_pref text;
 alter table public.profiles add column if not exists relationship text
   check (relationship in ('mae', 'pai', 'avo', 'outro', 'filho'));
 
+-- Rastreamento de assinatura/renovação (Stripe / Mercado Pago).
+alter table public.family_settings add column if not exists plan_provider text;
+alter table public.family_settings add column if not exists plan_interval text;
+alter table public.family_settings add column if not exists subscription_id text;
+alter table public.family_settings add column if not exists plan_expires_at timestamptz;
+
 -- ---------------------------------------------------------------------------
 -- Índices.
 -- ---------------------------------------------------------------------------

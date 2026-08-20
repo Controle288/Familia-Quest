@@ -127,6 +127,10 @@ export interface Admin {
 export interface FamilySettings {
   family_id: string;
   plan: FamilyPlan;
+  plan_provider?: PaymentProvider | null;
+  plan_interval?: PlanInterval | null;
+  subscription_id?: string | null;
+  plan_expires_at?: string | null;
   theme: string;
   theme_variant: ThemeVariant;
   background_key?: string;
