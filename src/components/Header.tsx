@@ -41,6 +41,9 @@ export const Header: React.FC = () => {
               e.currentTarget.src = '/icon.svg';
             }}
           />
+
+          <ModeSelector />
+
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="flex items-center gap-2.5 p-1 rounded-full hover:bg-indigo-50/80 transition-all focus:outline-none"
@@ -129,10 +132,6 @@ export const Header: React.FC = () => {
           >
               <RefreshCw className="w-5 h-5" />
           </button>
-
-          <div className="hidden md:block">
-            <ModeSelector variant="compact" />
-          </div>
 
           <ThemeToggle />
 

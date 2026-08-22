@@ -3,7 +3,6 @@ import { Camera, Trash2, Sparkles, MapPin, Clock } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { uploadAvatar, deleteAccount, createTicket, loadMyTickets } from '../lib/supabase';
 import { ThemePicker } from './ThemePicker';
-import { ModeSelector } from './ModeSelector';
 import { LocationPanel } from './LocationPanel';
 import { SupportTicket } from '../types';
 
@@ -152,17 +151,6 @@ export const SettingsTab: React.FC = () => {
           <Sparkles className="w-5 h-5 text-[var(--brand-2)]" /> Tema e aparência
         </h3>
         <ThemePicker />
-      </section>
-
-      {/* Modo de exibição por faixa etária */}
-      <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)]/80 p-5 shadow-sm">
-        <h3 className="mb-3 flex items-center gap-2 font-heading text-lg font-bold text-[var(--text)]">
-          <Sparkles className="w-5 h-5 text-[var(--brand-2)]" /> Modo de exibição
-        </h3>
-        <p className="mb-4 text-sm text-[var(--text-muted)]">
-          Escolha o visual de todo o app (Menu, Missões, Loja, Social, Estatísticas e Ajustes). A escolha fica salva no dispositivo.
-        </p>
-        <ModeSelector variant="full" />
       </section>
 
       {/* Recursos opcionais — somente responsáveis */}

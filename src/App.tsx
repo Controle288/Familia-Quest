@@ -16,7 +16,6 @@ import { CreateTaskModal } from './components/CreateTaskModal';
 import { CreateRewardModal } from './components/CreateRewardModal';
 import { AuthOnboarding } from './components/AuthOnboarding';
 import { SettingsTab } from './components/SettingsTab';
-import { ModeSelector } from './components/ModeSelector';
 import { TutorialTab } from './components/TutorialTab';
 import { AdminPanel } from './components/AdminPanel';
 import { FamilyMembersPanel } from './components/FamilyMembersPanel';
@@ -144,11 +143,6 @@ const MainAppContent: React.FC = () => {
                 );
               })}
             </nav>
-
-            <div className="mt-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)]/70 p-3">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Visual</p>
-              <ModeSelector variant="compact" />
-            </div>
 
             <div className="mt-auto rounded-2xl fq-gradient p-4 text-white shadow-lg shadow-indigo-500/20 relative">
               <button
