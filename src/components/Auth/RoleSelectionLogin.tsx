@@ -26,6 +26,8 @@ export interface RoleSelectionLoginProps {
     code: string;
     gender: ChildGender;
   }) => void;
+  // Responsável entrando em família existente via código de convite.
+  onJoinConvite?: (data: { email: string; password: string; code: string }) => void;
   onEsqueciSenha?: () => void;
 }
 
@@ -37,6 +39,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
   onEntrar,
   onCadastrar,
   onConvite,
+  onJoinConvite,
   onEsqueciSenha,
 }) => {
   const [authMode, setAuthMode] = useState<AuthMode>('entrar');
@@ -55,6 +58,8 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
       onConvite({ email, password, code: inviteCode, gender });
     } else if (authMode === 'entrar') {
       onEntrar({ email, password });
+    } else if (inviteCode.trim()) {
+      onJoinConvite?.({ email, password, code: inviteCode.trim().toUpperCase() });
     } else {
       onCadastrar({ familyName, respName, email, password });
     }
@@ -154,16 +159,20 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
 
         {/* CAMPOS DO FORMULÁRIO */}
         <div className="space-y-3 mb-5">
-          {/* Campos de cadastro de família (somente responsável) */}
+          {/* Campos de cadastro (somente responsável): criar família OU entrar via código */}
           {authMode === 'cadastrar' && !isChild && (
             <div className="space-y-3 animate-fadeIn">
-              <input
-                type="text"
-                value={familyName}
-                onChange={(e) => setFamilyName(e.target.value)}
-                placeholder="Nome da família (ex: Família Silva)"
-                className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
-              />
+              {/* Nome da família: visível quando NÃO há código (criando nova família) */}
+              {!inviteCode.trim() && (
+                <input
+                  type="text"
+                  value={familyName}
+                  onChange={(e) => setFamilyName(e.target.value)}
+                  placeholder="Nome da família (ex: Família Silva)"
+                  className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
+                />
+              )}
+
               <input
                 type="text"
                 value={respName}
@@ -171,6 +180,20 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                 placeholder="Seu nome (Responsável)"
                 className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
               />
+
+              {/* Código de convite: visível quando NÃO há nome de família (entrando em existente) */}
+              {!familyName.trim() && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    placeholder="Código de convite (para entrar em família existente)"
+                    className="w-full bg-slate-800/90 border border-pink-500/70 rounded-2xl py-3 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-pink-400 transition"
+                  />
+                  <KeyRound className="w-4 h-4 text-pink-400 absolute left-3.5 top-3.5" />
+                </div>
+              )}
             </div>
           )}
 
@@ -264,6 +287,8 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
               ? 'Entrar com Convite'
               : authMode === 'entrar'
               ? 'Entrar no Sistema'
+              : inviteCode.trim()
+              ? 'Entrar na Família'
               : 'Concluir Cadastro'}
           </span>
           <ArrowRight className="w-4 h-4" />

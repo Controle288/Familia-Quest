@@ -223,6 +223,85 @@ export const AuthOnboarding: React.FC = () => {
     }
   };
 
+  // Responsável entra em família existente via código de convite.
+  const handleJoinAsParent = async (data: {
+    email: string;
+    password: string;
+    code: string;
+  }) => {
+    const email = data.email.trim();
+    const password = data.password;
+    const code = data.code.trim().toUpperCase();
+
+    if (!email || !password || !code) {
+      addToast('Dados incompletos', 'Informe e-mail, senha e o código de convite.', 'warning');
+      return;
+    }
+    if (!isStrongPassword(password)) {
+      addToast('Senha fraca', 'Use pelo menos 8 caracteres, incluindo letras e números.', 'warning');
+      return;
+    }
+    if (!isSupabaseConfigured) {
+      addToast('Servidor indisponível', 'A configuração do banco de dados não foi encontrada.', 'error');
+      return;
+    }
+
+    const rel: RelationshipType = 'mae';
+    const meta = RELATIONSHIP_META[rel];
+
+    setIsBusy(true);
+    try {
+      const family: FamilyRecord | null = await findFamilyByInviteCode(code);
+      if (!family) throw new Error('Código não encontrado');
+
+      const settings = await loadFamilySettings(family.id);
+      const isPremium = (settings?.plan ?? 'free') === 'premium';
+      if (!isPremium) {
+        const { parents } = await getFamilyMemberCounts(family.id);
+        if (parents >= 2) {
+          throw new Error(
+            'No plano gratuito é permitido apenas 1 responsável. Assine o Premium para adicionar outro responsável.'
+          );
+        }
+      }
+
+      const authUser = await signUpWithEmail(email, password);
+      const draft: Omit<ProfileRecord, 'id' | 'family_id' | 'created_at'> = {
+        user_id: authUser.id,
+        name: 'Responsável',
+        full_name: 'Responsável',
+        role: 'parent',
+        relationship: rel,
+        avatar_url: avatarForRelationship(rel, 0),
+        title: meta.title,
+        level: 1,
+        xp: 0,
+        xp_base: 0,
+        xp_to_next_level: 500,
+        balance: 0,
+        streak_days: 0,
+      };
+
+      await createProfileInFamily(family.id, draft, authUser.id);
+
+      const state = await loadUserFamilyState();
+      if (state?.family && state.profiles.length) {
+        applyFamilySession(state.family, state.profiles as unknown as Profile[], state.myProfileId);
+      }
+
+      addToast(
+        'Família conectada!',
+        'Você entrou como responsável na família.',
+        'success'
+      );
+      setShowOnboarding(false);
+    } catch (error) {
+      addToast('Não foi possível entrar', (error as Error).message, 'error');
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
   return (
     <>
       <button
@@ -238,6 +317,7 @@ export const AuthOnboarding: React.FC = () => {
         onEntrar={handleLogin}
         onCadastrar={handleCreateAccount}
         onConvite={handleJoinAsChild}
+        onJoinConvite={handleJoinAsParent}
         onEsqueciSenha={() => setShowForgot(true)}
       />
 
