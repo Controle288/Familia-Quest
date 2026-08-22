@@ -90,27 +90,27 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans overflow-y-auto overscroll-none">
-      <div className="w-full max-w-md bg-slate-900/95 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-md">
-        
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-start justify-center p-4 py-6 font-sans overflow-y-auto overscroll-none">
+      <div className="w-full max-w-md bg-slate-900/95 border border-slate-800 rounded-3xl p-5 shadow-2xl backdrop-blur-md">
+
         {/* LOGO OFICIAL */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-3">
           <img
             src="/logo.png"
             alt="FamilyQuest Logo"
-            className="h-28 w-auto mx-auto drop-shadow-[0_0_25px_rgba(59,130,246,0.6)] mb-3 transition-all duration-300 hover:scale-105"
+            className="h-20 w-auto mx-auto drop-shadow-[0_0_25px_rgba(59,130,246,0.6)] mb-2 transition-all duration-300 hover:scale-105"
             onError={(e) => {
               e.currentTarget.onerror = null;
               e.currentTarget.src = '/icon.svg';
             }}
           />
-          <p className="text-xs text-slate-400">
+          <p className="text-[11px] text-slate-400">
             Transforme a rotina em uma aventura épica para toda a família.
           </p>
         </div>
 
         {/* ABAS: ENTRAR / CRIAR CONTA */}
-        <div className="grid grid-cols-2 bg-slate-800/80 p-1 rounded-2xl mb-5 border border-slate-700/60">
+        <div className="grid grid-cols-2 bg-slate-800/80 p-1 rounded-2xl mb-4 border border-slate-700/60">
           <button
             type="button"
             onClick={() => setAuthMode('entrar')}
@@ -136,8 +136,8 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
         </div>
 
         {/* SELEÇÃO DE PERFIL (RESPONSÁVEIS VS FILHOS) */}
-        <div className="mb-5">
-          <span className="block text-[11px] uppercase tracking-wider font-bold text-slate-400 text-center mb-2">
+        <div className="mb-4">
+          <span className="block text-[11px] uppercase tracking-wider font-bold text-slate-400 text-center mb-1.5">
             Você entra como:
           </span>
           <div className="grid grid-cols-2 gap-3">
@@ -145,8 +145,8 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
             <button
               type="button"
               onClick={() => setSelectedRole('responsavel')}
-              className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all ${
-                selectedRole === 'responsavel'
+          className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all ${
+            selectedRole === 'responsavel'
                   ? 'border-pink-500 bg-pink-950/25 shadow-[0_0_15px_rgba(236,72,153,0.3)] scale-[1.01]'
                   : 'border-slate-800 bg-slate-800/40 hover:border-pink-500/40'
               }`}
@@ -164,8 +164,8 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
             <button
               type="button"
               onClick={() => setSelectedRole('filho')}
-              className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all ${
-                selectedRole === 'filho'
+          className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all ${
+            selectedRole === 'filho'
                   ? 'border-cyan-400 bg-cyan-950/25 shadow-[0_0_15px_rgba(34,211,238,0.3)] scale-[1.01]'
                   : 'border-slate-800 bg-slate-800/40 hover:border-cyan-400/40'
               }`}
@@ -182,7 +182,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
         </div>
 
         {/* CAMPOS DO FORMULÁRIO */}
-        <div className="space-y-3 mb-5">
+        <div className="space-y-2.5 mb-4">
           {/* Campos de cadastro (somente responsável): criar família OU entrar via código */}
           {authMode === 'cadastrar' && !isChild && (
             <div className="space-y-3 animate-fadeIn">
@@ -193,7 +193,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                   value={familyName}
                   onChange={(e) => setFamilyName(e.target.value)}
                   placeholder="Nome da família (ex: Família Silva)"
-                  className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
+                  className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
                 />
               )}
 
@@ -201,8 +201,8 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                 type="text"
                 value={respName}
                 onChange={(e) => setRespName(e.target.value)}
-                placeholder="Seu nome (Responsável)"
-                className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
+                 placeholder="Seu nome (Responsável)"
+                 className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
               />
 
               {/* Código de convite: visível quando NÃO há nome de família (entrando em existente) */}
@@ -212,8 +212,8 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                     type="text"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
-                    placeholder="Código de convite (para entrar em família existente)"
-                    className="w-full bg-slate-800/90 border border-pink-500/70 rounded-2xl py-3 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-pink-400 transition"
+                     placeholder="Código de convite (para entrar em família existente)"
+                     className="w-full bg-slate-800/90 border border-pink-500/70 rounded-2xl py-2.5 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-pink-400 transition"
                   />
                   <KeyRound className="w-4 h-4 text-pink-400 absolute left-3.5 top-3.5" />
                 </div>
@@ -227,7 +227,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="E-mail de acesso"
-              className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition"
+              className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition"
             />
             <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
           </div>
@@ -238,7 +238,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Senha"
-              className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition"
+              className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition"
             />
             <Shield className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
           </div>
@@ -260,8 +260,8 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                   type="text"
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value)}
-                  placeholder="Código de convite da família"
-                  className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 transition"
+                   placeholder="Código de convite da família"
+                   className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 transition"
                 />
                 <KeyRound className="w-4 h-4 text-cyan-400 absolute left-3.5 top-3.5" />
               </div>
@@ -273,14 +273,14 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                   max={17}
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
-                  placeholder="Idade (anos)"
-                  className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 transition"
+                   placeholder="Idade (anos)"
+                   className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 transition"
                 />
                 <User className="w-4 h-4 text-cyan-400 absolute left-3.5 top-3.5" />
               </div>
 
               <div>
-                <span className="block text-[10px] uppercase tracking-wider text-slate-400 mb-1.5">
+                 <span className="block text-[10px] uppercase tracking-wider text-slate-400 mb-1">
                   Você é:
                 </span>
                 <div className="grid grid-cols-2 gap-2">
@@ -317,7 +317,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
           type="button"
           disabled={loading}
           onClick={handleSubmit}
-          className="w-full py-3 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-cyan-950/50 transition cursor-pointer mb-3 disabled:opacity-60"
+          className="w-full py-2.5 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-cyan-950/50 transition cursor-pointer mb-2 disabled:opacity-60"
         >
           <span>
             {authMode === 'entrar'
