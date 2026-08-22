@@ -7,7 +7,7 @@ import { relationshipLabel } from './lib/avatars';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { ParentDashboard } from './components/ParentDashboard';
-import { ChildDashboard } from './components/ChildDashboard';
+import DashboardFilhoContainer from './components/Dashboard/DashboardFilhoContainer';
 import { RewardStore } from './components/RewardStore';
 import { SocialTab } from './components/SocialTab';
 import { StatsTab } from './components/StatsTab';
@@ -141,7 +141,7 @@ const MainAppContent: React.FC = () => {
                       onOpenCreateReward={() => setIsCreateRewardOpen(true)}
                     />
                   ) : (
-                    <ChildDashboard onGoToShop={() => setActiveTab('shop')} />
+                    <DashboardFilhoContainer onGoToShop={() => setActiveTab('shop')} />
                   )}
                 </>
               )}
