@@ -19,6 +19,7 @@ import { SettingsTab } from './components/SettingsTab';
 import { TutorialTab } from './components/TutorialTab';
 import { AdminPanel } from './components/AdminPanel';
 import { ToastContainer } from './components/ToastContainer';
+import { InstallPrompt } from './components/InstallPrompt';
 import { useEffect } from 'react';
 import { initRemoteNavigation } from './utils/remoteNavigation';
 
@@ -190,6 +191,7 @@ const MainAppContent: React.FC = () => {
         onClose={() => setIsCreateRewardOpen(false)}
       />
       <ToastContainer />
+      <InstallPrompt />
 
       {isSyncing && (
         <div className="fixed bottom-24 right-4 z-40 md:bottom-6 flex items-center gap-2 rounded-full bg-[#3525cd] text-white text-xs font-semibold px-3 py-2 shadow-lg shadow-indigo-500/30">

@@ -38,6 +38,7 @@ export interface ChildProfile {
   xp: number;
   level: number;
   balance: number; // Saldo monetário (modo Young Adult)
+  streakDays: number;
   financialGoal: FinancialGoal | null;
   tasks: FamiliaTask[];
   availableRewards: FamiliaReward[];
@@ -54,6 +55,7 @@ export const mockChild: ChildProfile = {
   xp: 1550,
   level: 3,
   balance: 45.75, // Em R$
+  streakDays: 5,
   financialGoal: {
     name: 'Economizar para o Celular',
     target: 800,

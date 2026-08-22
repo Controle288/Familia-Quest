@@ -89,6 +89,7 @@ const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ onGoT
       xp: currentProfile.xp,
       level: currentProfile.level,
       balance: currentProfile.balance,
+      streakDays: currentProfile.streak_days ?? 0,
       financialGoal: currentProfile.financial_goal ?? null,
       tasks: childTasks,
       availableRewards,
@@ -146,6 +147,11 @@ const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ onGoT
           <span className={`text-xs md:text-sm ${themeConfig.textMuted}`}>
             {profile.name}{profile.age ? `, ${profile.age} anos` : ''} • Modo {ageMode === 'kids' ? 'Kids' : ageMode === 'teen' ? 'Teen / Gamer' : 'Young Adult'}
           </span>
+          {profile.streakDays > 0 && (
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold ${themeConfig.accent} ${themeConfig.primary}`}>
+              🔥 {profile.streakDays} dias
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">

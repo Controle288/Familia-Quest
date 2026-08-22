@@ -36,6 +36,7 @@ export interface Profile {
   xp_to_next_level: number;
   balance: number;
   streak_days: number;
+  last_active?: string;
   financial_goal?: { name: string; target: number; current: number } | null;
   theme_pref?: string;
   created_at: string;
@@ -69,6 +70,7 @@ export interface Task {
   reminder_minutes?: number;
   submitted_at?: string;
   approved_at?: string;
+  completed_at?: string;
   proof_url?: string;
   rejection_reason?: string;
   created_at: string;

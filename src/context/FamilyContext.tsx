@@ -22,6 +22,7 @@ import { applyThemePref } from '../lib/themes';
 import { FamilySettings } from '../types';
 import { applyLevelUp, canRedeem, applyRedeem } from '../lib/gameLogic';
 import { playComplete, playReward, playLevelUp, playError } from '../lib/sounds';
+import { loadCache, saveCache, clearCache } from '../lib/cache';
 import {
   Family,
   Profile,
@@ -31,6 +32,7 @@ import {
   ActivityLog,
   ActiveTab,
   ParentSubTab,
+  TaskStatus,
 } from '../types';
 
 interface LevelUpInfo {
@@ -286,14 +288,31 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setAuthUser(user);
       setShowOnboarding(!user);
 
-      if (!user) return;
+      if (!user) {
+        clearCache();
+        return;
+      }
+
+      // Hydrate immediately from the local cache so the app renders without
+      // waiting on the network (avoids the blank loading screen on F5).
+      const cached = loadCache();
+      if (cached?.family && cached.profiles.length) {
+        setFamily(cached.family);
+        setProfiles(cached.profiles);
+        setTasks(cached.tasks);
+        setRewards(cached.rewards);
+        setRedemptions(cached.redemptions ?? []);
+        setActivityLogs(cached.activityLogs ?? []);
+        if (cached.myProfileId) setCurrentProfileId(cached.myProfileId);
+      }
 
       try {
         const state = await loadUserFamilyState();
         if (isCancelled) return;
 
         if (!state?.family || !state.profiles.length) {
-          setShowOnboarding(true);
+          // No real account yet — fall back to onboarding (keep cached data if any).
+          if (!cached?.family) setShowOnboarding(true);
           return;
         }
 
@@ -301,11 +320,26 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setProfiles(state.profiles as Profile[]);
         setTasks(state.tasks as Task[]);
         setRewards(state.rewards as Reward[]);
+        setRedemptions((state.redemptions as Redemption[]) ?? []);
+        setActivityLogs((state.activityLogs as ActivityLog[]) ?? []);
         setCurrentProfileId(state.myProfileId);
         setShowOnboarding(false);
+
+        saveCache({
+          family: state.family,
+          profiles: state.profiles as Profile[],
+          tasks: state.tasks as Task[],
+          rewards: state.rewards as Reward[],
+          redemptions: (state.redemptions as Redemption[]) ?? [],
+          activityLogs: (state.activityLogs as ActivityLog[]) ?? [],
+          myProfileId: state.myProfileId,
+        });
+
+        // Recurring resets are triggered once scheduling settings are known
+        // (see the familySettings effect) plus on a periodic timer.
       } catch (error) {
         console.warn('Supabase sync skipped because tables are not ready yet:', error);
-        setShowOnboarding(true);
+        if (!cached?.family) setShowOnboarding(true);
       }
     };
 
@@ -368,6 +402,18 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // In-app reminders for scheduled tasks (premium). Fires once per task when the
   // reminder window opens, so the family isn't spammed on every re-render.
   const remindedRef = useRef<Set<string>>(new Set());
+
+  // Keep the latest tasks available to the recurring-reset routine without
+  // re-binding its interval on every task change.
+  const tasksRef = useRef<Task[]>([]);
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
+
+  const familySettingsRef = useRef<FamilySettings | null>(null);
+  useEffect(() => {
+    familySettingsRef.current = familySettings;
+  }, [familySettings]);
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const now = Date.now();
@@ -399,6 +445,82 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     return true;
   };
+
+  // Monday 00:00 of the current week.
+  const startOfWeek = (d: Date): Date => {
+    const date = new Date(d);
+    const day = (date.getDay() + 6) % 7; // Monday = 0
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - day);
+    return date;
+  };
+
+  /**
+   * Reset recurring (daily/weekly) missions back to "pending" when their cycle
+   * rolls over, so children can redo them and earn XP/points again. Honors the
+   * family's schedule_enabled setting. Safe to call repeatedly.
+   */
+  const runRecurringReset = useCallback(
+    async (sourceTasks?: Task[]) => {
+      if (!isSupabaseConfigured || !authUser) return;
+      if (familySettingsRef.current && familySettingsRef.current.schedule_enabled === false) return;
+
+      const list = sourceTasks ?? tasksRef.current;
+      if (!list.length) return;
+
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const weekStart = startOfWeek(now);
+
+      const resets = list.filter((t) => {
+        if (t.status !== 'completed' || !t.recurrence || t.recurrence === 'none') return false;
+        const completed = t.completed_at ? new Date(t.completed_at) : null;
+        if (!completed) return false;
+        if (t.recurrence === 'daily') return completed.toISOString().slice(0, 10) !== todayStr;
+        if (t.recurrence === 'weekly') return completed < weekStart;
+        return false;
+      });
+
+      if (!resets.length) return;
+
+      const ids = new Set(resets.map((t) => t.id));
+      const resetFields = {
+        status: 'pending' as TaskStatus,
+        submitted_at: null,
+        approved_at: null,
+        completed_at: null,
+        rejection_reason: null,
+      };
+
+      setTasks((prev) =>
+        prev.map((t) => (ids.has(t.id) ? { ...t, ...resetFields } : t))
+      );
+
+      await persistWrites(resets.map((t) => syncSupabaseUpdate('tasks', t.id, resetFields)));
+    },
+    [isSupabaseConfigured, authUser, persistWrites]
+  );
+
+  // When scheduling is enabled, reset recurring missions for the active cycle.
+  useEffect(() => {
+    if (familySettings?.schedule_enabled) {
+      runRecurringReset();
+    }
+  }, [familySettings?.schedule_enabled, runRecurringReset]);
+
+  // Keep recurring missions fresh over time (every 5 min + on window focus).
+  useEffect(() => {
+    if (!isSupabaseConfigured || !authUser) return;
+    const interval = setInterval(() => {
+      runRecurringReset();
+    }, 5 * 60 * 1000);
+    const onFocus = () => runRecurringReset();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [isSupabaseConfigured, authUser, runRecurringReset]);
 
   const completeTask = async (taskId: string, proofUrl?: string) => {
     if (isSupabaseConfigured && !authUser) {
@@ -456,9 +578,28 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const result = applyLevelUp(assignedChild, xpGained, moneyGained);
 
+    // Daily streak: counts consecutive days with at least one approved task.
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const lastActive = assignedChild.last_active ? new Date(assignedChild.last_active) : null;
+    let newStreak = assignedChild.streak_days || 0;
+    if (lastActive) {
+      const lastStr = lastActive.toISOString().slice(0, 10);
+      if (lastStr !== todayStr) {
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().slice(0, 10);
+        newStreak = lastStr === yesterdayStr ? newStreak + 1 : 1;
+      }
+    } else {
+      newStreak = 1;
+    }
+
     setTasks((prev) =>
       prev.map((t) =>
-        t.id === taskId ? { ...t, status: 'completed', approved_at: 'Agora mesmo' } : t
+        t.id === taskId
+          ? { ...t, status: 'completed', approved_at: 'Agora mesmo', completed_at: today.toISOString() }
+          : t
       )
     );
 
@@ -472,6 +613,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               xp_base: result.xp_base,
               xp_to_next_level: result.xp_to_next_level,
               balance: result.balance,
+              streak_days: newStreak,
+              last_active: todayStr,
             }
           : p
       )
@@ -492,13 +635,19 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setActivityLogs((prev) => [logItem, ...prev]);
 
     const writes = [
-      syncSupabaseUpdate('tasks', taskId, { status: 'completed', approved_at: 'Agora mesmo' }),
+      syncSupabaseUpdate('tasks', taskId, {
+        status: 'completed',
+        approved_at: 'Agora mesmo',
+        completed_at: today.toISOString(),
+      }),
       syncSupabaseUpdate('profiles', assignedChild.id, {
         xp: result.xp,
         level: result.level,
         xp_base: result.xp_base,
         xp_to_next_level: result.xp_to_next_level,
         balance: result.balance,
+        streak_days: newStreak,
+        last_active: todayStr,
       }),
       syncSupabaseWrite('activity_logs', logItem as unknown as Record<string, unknown>),
     ];
@@ -794,6 +943,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.warn('Sign out failed:', error);
     }
 
+    clearCache();
     setAuthUser(null);
     setShowOnboarding(true);
     addToast('Você saiu da sua conta.', undefined, 'info');

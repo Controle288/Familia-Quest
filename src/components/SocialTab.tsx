@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Flame, Sparkles, Award, Star, UserPlus, Heart, Users } from 'lucide-react';
+import { Trophy, Flame, Sparkles, Award, Star, UserPlus, Heart, Users, CalendarDays } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { BadgeShelf } from './BadgeShelf';
 import { MotionList, MotionItem } from './motion';
@@ -13,6 +13,27 @@ export const SocialTab: React.FC = () => {
 
   // Sort profiles by XP for leaderboard
   const sortedProfiles = [...profiles].sort((a, b) => b.xp - a.xp);
+
+  // Weekly ranking: points earned this week (Monday 00:00 onwards) per member.
+  const weekStart = (() => {
+    const d = new Date();
+    const day = (d.getDay() + 6) % 7;
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - day);
+    return d;
+  })();
+
+  const weeklyPoints = new Map<string, number>();
+  activityLogs.forEach((log) => {
+    const when = new Date(log.created_at);
+    if (when >= weekStart && log.points_change > 0) {
+      weeklyPoints.set(log.profile_id, (weeklyPoints.get(log.profile_id) ?? 0) + log.points_change);
+    }
+  });
+
+  const weeklyRanking = [...profiles]
+    .map((p) => ({ profile: p, points: weeklyPoints.get(p.id) ?? 0 }))
+    .sort((a, b) => b.points - a.points);
 
   return (
     <div className="space-y-6 pb-12">
@@ -110,6 +131,61 @@ export const SocialTab: React.FC = () => {
             );
           })}
         </MotionList>
+      </section>
+
+      {/* Weekly Ranking */}
+      <section className="bg-white rounded-3xl p-6 shadow-[0px_4px_20px_rgba(79,70,229,0.06)] border border-slate-100 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 className="font-heading text-lg font-bold text-slate-900 flex items-center gap-2">
+            <CalendarDays className="w-5 h-5 text-emerald-500" />
+            Ranking Semanal
+          </h3>
+          <span className="text-xs font-semibold text-slate-400">Esta semana</span>
+        </div>
+
+        {weeklyRanking.every((r) => r.points === 0) ? (
+          <div className="text-center py-6 text-slate-400 text-xs">
+            Ninguém pontuou esta semana ainda. Bora começar! 🚀
+          </div>
+        ) : (
+          <MotionList className="space-y-3">
+            {weeklyRanking.map((r, idx) => {
+              const podium = ['bg-amber-100 text-amber-800 border-amber-300', 'bg-slate-100 text-slate-700 border-slate-300', 'bg-amber-50 text-amber-700 border-amber-200'];
+              const isLeader = idx === 0 && r.points > 0;
+              return (
+                <MotionItem
+                  key={r.profile.id}
+                  className={`p-4 rounded-2xl border flex items-center justify-between gap-3 transition-all ${
+                    isLeader ? 'bg-emerald-50/70 border-emerald-200' : 'bg-[#f8f9ff]/70 border-slate-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border ${podium[idx] || 'bg-slate-50 text-slate-500'}`}>
+                      {idx + 1}º
+                    </div>
+                    <img
+                      src={r.profile.avatar_url}
+                      alt={r.profile.full_name}
+                      className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-xs"
+                    />
+                    <div>
+                      <h4 className="font-heading font-bold text-slate-900 text-sm">
+                        {r.profile.full_name}
+                        {isLeader && <span className="ml-1.5">👑</span>}
+                      </h4>
+                      <p className="text-xs text-slate-500">
+                        Nível {r.profile.level} • {r.profile.streak_days} dias de ofensiva
+                      </p>
+                    </div>
+                  </div>
+                  <span className="font-heading font-bold text-base md:text-lg text-emerald-600 block">
+                    +{r.points} XP
+                  </span>
+                </MotionItem>
+              );
+            })}
+          </MotionList>
+        )}
       </section>
 
       {/* Family Achievements Wall */}

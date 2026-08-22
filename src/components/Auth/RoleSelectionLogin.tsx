@@ -43,13 +43,18 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
   onJoinConvite,
   onEsqueciSenha,
 }) => {
-  const [authMode, setAuthMode] = useState<AuthMode>('entrar');
-  const [selectedRole, setSelectedRole] = useState<MainRole>('responsavel');
+  // Deep link de convite: ?invite=CODIGO preenche o código automaticamente
+  // e direciona o usuário para o fluxo de cadastro (entrar em família existente).
+  const prefillInvite =
+    new URLSearchParams(window.location.search).get('invite')?.trim().toUpperCase() ?? '';
+
+  const [authMode, setAuthMode] = useState<AuthMode>(prefillInvite ? 'cadastrar' : 'entrar');
+  const [selectedRole, setSelectedRole] = useState<MainRole>(prefillInvite ? 'filho' : 'responsavel');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [familyName, setFamilyName] = useState('');
   const [respName, setRespName] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
+  const [inviteCode, setInviteCode] = useState(prefillInvite);
   const [gender, setGender] = useState<ChildGender>('menino');
   const [age, setAge] = useState('');
 
@@ -61,6 +66,14 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
     document.body.classList.add('fq-auth-bg');
     return () => document.body.classList.remove('fq-auth-bg');
   }, []);
+
+  // Limpa o parâmetro da URL após capturá-lo, para que futuros reloads não
+  // re-disparêm o deep link.
+  useEffect(() => {
+    if (prefillInvite) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [prefillInvite]);
 
   const handleSubmit = () => {
     if (isChild) {
