@@ -140,6 +140,9 @@ export interface FamilySettings {
   background_key?: string;
   schedule_enabled: boolean;
   location_enabled: boolean;
+  // true quando a família é gerenciada por um administrador do app: garante
+  // que todos os membros (pais e filhos) herdem o acesso premium.
+  admin_managed?: boolean;
   created_at?: string;
   updated_at?: string;
 }

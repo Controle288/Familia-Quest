@@ -219,6 +219,15 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  // Famílias gerenciadas por um administrador do app herdam o premium para
+  // todos os membros. Persistimos a flag admin_managed na família para que
+  // filhos e responsáveis (mesmo não-admin) também recebam o acesso.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !isAdminUser || !family?.id) return;
+    if (familySettings?.admin_managed) return;
+    updateFamilySettings({ admin_managed: true }).catch(() => {});
+  }, [isSupabaseConfigured, isAdminUser, family?.id, familySettings?.admin_managed, updateFamilySettings]);
+
   const currentProfile = profiles.find((p) => p.id === currentProfileId) || profiles[0];
 
   const addToast = (
@@ -1033,7 +1042,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isInitialized,
         familySettings,
         isAdminUser,
-        isPremium: isAdminUser || isFamilyPremium(familySettings),
+        isPremium: isAdminUser || isFamilyPremium(familySettings) || Boolean(familySettings?.admin_managed),
         premiumExpiresAt: isFamilyPremium(familySettings)
           ? (familySettings?.plan_expires_at ?? null)
           : null,
