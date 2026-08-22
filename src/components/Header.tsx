@@ -201,12 +201,6 @@ export const Header: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-heading font-bold text-slate-900 text-base">Trocar Perfil</h3>
-              <button 
-                onClick={() => setShowOnboarding(true)}
-                className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold"
-              >
-                <RefreshCw className="w-3 h-3" /> Trocar Conta
-              </button>
             </div>
 
             {isAuthenticated && (

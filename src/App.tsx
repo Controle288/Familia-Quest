@@ -23,15 +23,36 @@ import { useEffect } from 'react';
 import { initRemoteNavigation } from './utils/remoteNavigation';
 
 const MainAppContent: React.FC = () => {
-  const { activeTab, setActiveTab, currentProfile, authUser, isSyncing, profiles, family, isAdminUser, isPremium, premiumExpiresAt, familySettings } = useFamily();
+  const { activeTab, setActiveTab, currentProfile, authUser, isSyncing, isInitialized, profiles, family, isAdminUser, isPremium, premiumExpiresAt, familySettings } = useFamily();
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isCreateRewardOpen, setIsCreateRewardOpen] = useState(false);
   const [muted, setMutedState] = useState(isMuted());
 
+  // While the session is still rehydrating we show a neutral splash so the
+  // reload/F5 flash of the login screen is avoided.
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#f8f9ff]">
+        <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-[#3525cd] animate-spin" />
+        <p className="text-sm font-semibold text-slate-500">Carregando FamiliaQuest…</p>
+      </div>
+    );
+  }
+
   // Official-only: the app is only usable once a family is loaded from the
   // server. Until then we show the onboarding (create account / join by code).
-  if (!authUser || !family?.id || profiles.length === 0) {
+  // (If logged in but family state is still loading, keep the splash — never
+  // the login screen.)
+  if (!authUser) {
     return <AuthOnboarding />;
+  }
+  if (!family?.id || profiles.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#f8f9ff]">
+        <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-[#3525cd] animate-spin" />
+        <p className="text-sm font-semibold text-slate-500">Carregando sua família…</p>
+      </div>
+    );
   }
 
   const toggleMute = () => {
@@ -51,7 +72,7 @@ const MainAppContent: React.FC = () => {
   ];
 
   return (
-      <div className="min-h-screen text-[#0b1c30] dark:text-slate-100 flex flex-col antialiased">
+      <div className="min-h-screen text-[#0b1c30] dark:text-slate-100 flex flex-col antialiased overscroll-none">
       <Header />
 
       <div className="flex-1 w-full mx-auto pt-24 pb-24 md:pb-12 px-4 md:px-6 xl:px-8">

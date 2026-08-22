@@ -62,6 +62,7 @@ interface FamilyContextType {
   authUser: AuthUser | null;
   isAuthenticated: boolean;
   isSyncing: boolean;
+  isInitialized: boolean;
   familySettings: FamilySettings | null;
   isAdminUser: boolean;
   isPremium: boolean;
@@ -126,10 +127,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setShowOnboarding(false);
+      setIsInitialized(true);
       return;
     }
 
@@ -139,9 +142,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setShowOnboarding(!user);
     };
 
-    bootstrapAuthState().catch(() => {
-      setShowOnboarding(true);
-    });
+    bootstrapAuthState()
+      .catch(() => {
+        setShowOnboarding(true);
+      })
+      .finally(() => {
+        setIsInitialized(true);
+      });
   }, []);
 
   // Re-fetch the family state from Supabase. Preserves the current profile selection
@@ -269,6 +276,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Initial load + auth state handling
   useEffect(() => {
     if (!isSupabaseConfigured) {
+      setIsInitialized(true);
       return;
     }
 
@@ -306,7 +314,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (isCancelled) return;
       await loadForUser(user);
     };
-    init().catch(() => {});
+    init()
+      .catch(() => {})
+      .finally(() => {
+        if (!isCancelled) setIsInitialized(true);
+      });
 
     const unsubscribe = onAuthChange((user) => {
       loadForUser(user);
@@ -868,6 +880,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         authUser,
         isAuthenticated: Boolean(authUser),
         isSyncing,
+        isInitialized,
         familySettings,
         isAdminUser,
         isPremium: isAdminUser || isFamilyPremium(familySettings),

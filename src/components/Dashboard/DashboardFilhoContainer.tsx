@@ -138,7 +138,7 @@ const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ onGoT
   const commonProps = { profile, theme: themeConfig, onCompleteTask: handleCompleteTask, onRedeem: handleRedeem, onSetGoal: handleSetGoal };
 
   return (
-    <div className={`min-h-screen ${themeConfig.bg} p-4 md:p-6 ${themeConfig.text} font-sans relative`}>
+    <div className={`min-h-full ${themeConfig.bg} p-4 md:p-6 ${themeConfig.text} font-sans relative`}>
       {/* Barra de controles: modo por idade + tema */}
       <header className={`flex flex-wrap items-center justify-between gap-3 pb-5 mb-6 ${themeConfig.border} border-b`}>
         <div className="flex items-center gap-3 flex-wrap">

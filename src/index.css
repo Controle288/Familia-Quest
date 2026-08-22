@@ -27,6 +27,10 @@
     --indigo-soft: #1e2a4a;
   }
 
+  html, body {
+    overscroll-behavior: none;
+  }
+
   body {
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
