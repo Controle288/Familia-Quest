@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import {
   createFamilyWithProfiles,
@@ -304,14 +303,6 @@ export const AuthOnboarding: React.FC = () => {
 
   return (
     <>
-      <button
-        onClick={() => setShowOnboarding(false)}
-        className="fixed top-4 right-4 z-[70] w-10 h-10 rounded-full bg-white/10 text-slate-300 hover:bg-white/20 shadow-sm flex items-center justify-center transition-colors"
-        title="Fechar"
-      >
-        <X className="w-5 h-5" />
-      </button>
-
       <RoleSelectionLogin
         loading={isBusy}
         onEntrar={handleLogin}
