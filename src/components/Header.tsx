@@ -36,7 +36,7 @@ export const Header: React.FC = () => {
           <img
             src="/logo.png"
             alt="FamilyQuest"
-            className="h-9 w-auto sm:h-10"
+            className="h-12 w-auto sm:h-14"
             onError={(e) => {
               e.currentTarget.onerror = null;
               e.currentTarget.src = '/icon.svg';

@@ -320,7 +320,7 @@ export const AuthOnboarding: React.FC = () => {
               <img
                 src="/logo.png"
                 alt="FamilyQuest Logo"
-                className="h-20 w-auto mx-auto drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                className="h-28 w-auto mx-auto drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = '/icon.svg';
