@@ -18,6 +18,8 @@ import { AuthOnboarding } from './components/AuthOnboarding';
 import { SettingsTab } from './components/SettingsTab';
 import { TutorialTab } from './components/TutorialTab';
 import { AdminPanel } from './components/AdminPanel';
+import { FamilyMembersPanel } from './components/FamilyMembersPanel';
+import { PlanPanel } from './components/PlanPanel';
 import { ToastContainer } from './components/ToastContainer';
 import { InstallPrompt } from './components/InstallPrompt';
 import { useEffect } from 'react';
@@ -62,11 +64,19 @@ const MainAppContent: React.FC = () => {
     setMutedState(next);
   };
 
+  const isGuardian = currentProfile?.role === 'parent';
+
   const desktopTabs = [
     { id: 'quest' as const, label: 'Missões' },
     { id: 'shop' as const, label: 'Loja' },
     { id: 'social' as const, label: 'Social' },
     { id: 'stats' as const, label: 'Estatísticas' },
+    ...(isGuardian
+      ? [
+          { id: 'members' as const, label: 'Membros' },
+          { id: 'plan' as const, label: 'Plano' },
+        ]
+      : []),
     { id: 'settings' as const, label: 'Ajustes' },
     { id: 'tutorial' as const, label: 'Tutorial' },
     ...(isAdminUser ? [{ id: 'admin' as const, label: 'Admin' }] : []),
@@ -78,20 +88,20 @@ const MainAppContent: React.FC = () => {
 
       <div className="flex-1 w-full mx-auto pt-24 pb-24 md:pb-12 px-4 md:px-6 xl:px-8">
         <div className="mx-auto flex w-full max-w-7xl xl:max-w-375 gap-5 xl:gap-7">
-          <aside className="hidden lg:flex w-72 shrink-0 flex-col rounded-3xl border border-indigo-100 bg-white/80 p-4 shadow-[0px_10px_30px_rgba(79,70,229,0.08)] backdrop-blur-sm dark:bg-slate-900/80 dark:border-indigo-800/60 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
-            <div className="mb-5 px-2">
+          <aside className="hidden lg:flex w-64 shrink-0 flex-col rounded-3xl border border-indigo-100 bg-white/80 p-3 shadow-[0px_10px_30px_rgba(79,70,229,0.08)] backdrop-blur-sm dark:bg-slate-900/80 dark:border-indigo-800/60 lg:sticky lg:top-24 lg:self-start lg:h-[calc(100vh-7rem)] lg:overflow-y-auto">
+            <div className="mb-4 px-2">
               <img
                 src="/logo.png"
                 alt="FamilyQuest"
-                className="h-12 w-auto mb-3"
+                className="h-10 w-auto mb-2"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = '/icon.svg';
                 }}
               />
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Menu</p>
-              <div className="mt-2 flex items-center gap-2">
-                <h2 className="font-heading text-xl font-bold text-slate-900">Família</h2>
+              <div className="mt-1.5 flex items-center gap-2">
+                <h2 className="font-heading text-lg font-bold text-slate-900">Família</h2>
                 <span
                   className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                     isPremium
@@ -115,14 +125,14 @@ const MainAppContent: React.FC = () => {
               </div>
             </div>
 
-            <nav className="space-y-2">
+            <nav className="space-y-1.5">
               {desktopTabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition-all ${
+                    className={`w-full rounded-2xl px-3 py-2 text-left text-sm font-semibold transition-all ${
                       isActive
                         ? 'bg-[#3525cd] text-white shadow-md shadow-indigo-500/20'
                         : 'text-slate-600 hover:bg-indigo-50 hover:text-[#3525cd]'
@@ -171,6 +181,8 @@ const MainAppContent: React.FC = () => {
               {activeTab === 'shop' && <RewardStore />}
               {activeTab === 'social' && <SocialTab />}
               {activeTab === 'stats' && <StatsTab />}
+              {activeTab === 'members' && isGuardian && <FamilyMembersPanel />}
+              {activeTab === 'plan' && isGuardian && <PlanPanel />}
               {activeTab === 'settings' && <SettingsTab />}
               {activeTab === 'tutorial' && <TutorialTab />}
               {activeTab === 'admin' && <AdminPanel />}

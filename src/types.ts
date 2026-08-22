@@ -113,7 +113,7 @@ export interface ActivityLog {
   created_at: string;
 }
 
-export type ActiveTab = 'quest' | 'shop' | 'social' | 'stats' | 'settings' | 'tutorial' | 'admin';
+export type ActiveTab = 'quest' | 'shop' | 'social' | 'stats' | 'members' | 'plan' | 'settings' | 'tutorial' | 'admin';
 export type ParentSubTab = 'pendentes' | 'gerenciar' | 'loja';
 
 // ---------------------------------------------------------------------------
