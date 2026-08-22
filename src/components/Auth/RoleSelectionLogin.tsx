@@ -4,7 +4,7 @@
 // a escolha de gênero (menino/menina). Componente controlado por props: quem
 // usa (AuthOnboarding) fornece a lógica de autenticação.
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, Shield, KeyRound, ArrowRight } from 'lucide-react';
 
 export type MainRole = 'responsavel' | 'filho';
@@ -53,6 +53,13 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
 
   const isChild = selectedRole === 'filho';
 
+  // Trava o fundo global (body) na cor escura sólida enquanto a tela de
+  // autenticação está montada, impedindo o "flash" branco no overscroll.
+  useEffect(() => {
+    document.body.classList.add('fq-auth-bg');
+    return () => document.body.classList.remove('fq-auth-bg');
+  }, []);
+
   const handleSubmit = () => {
     if (isChild) {
       onConvite({ email, password, code: inviteCode, gender });
@@ -66,7 +73,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans overflow-y-auto overscroll-none">
       <div className="w-full max-w-md bg-slate-900/95 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-md">
         
         {/* LOGO OFICIAL */}

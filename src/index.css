@@ -33,6 +33,13 @@
     background: var(--bg);
   }
 
+  /* Fundo escuro sólido apenas na tela de autenticação (sobrepõe o body
+     claro padrão) para eliminar o flash branco ao rolar/esticar a tela. */
+  body.fq-auth-bg {
+    background: #020617 !important;
+    overscroll-behavior: none;
+  }
+
   h1, h2, h3, h4, h5, h6, .font-heading {
     font-family: var(--font-heading);
   }
