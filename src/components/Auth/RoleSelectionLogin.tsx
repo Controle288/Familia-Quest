@@ -1,8 +1,9 @@
 // Tela unificada de Login/Cadastro do FamilyQuest.
 // Logo oficial centralizada, abas Entrar/Criar Conta e seleção de perfil
-// (Responsáveis vs Filhos). O fluxo de Filhos revela o código de convite e
-// a escolha de gênero (menino/menina). Componente controlado por props: quem
-// usa (AuthOnboarding) fornece a lógica de autenticação.
+// (Responsáveis vs Filhos). Na aba "Entrar", ambos os perfis usam apenas
+// e-mail e senha. Na aba "Criar Conta", os filhos informam código de convite,
+// idade e gênero; os responsáveis informam nome da família (ou código).
+// Componente controlado por props: quem usa (AuthOnboarding) fornece a lógica.
 
 import React, { useEffect, useState } from 'react';
 import { User, Shield, KeyRound, ArrowRight } from 'lucide-react';
@@ -76,10 +77,11 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
   }, [prefillInvite]);
 
   const handleSubmit = () => {
-    if (isChild) {
-      onConvite({ email, password, code: inviteCode, gender, age: age.trim() ? Number(age) : 0 });
-    } else if (authMode === 'entrar') {
+    if (authMode === 'entrar') {
+      // Login: apenas e-mail e senha, independente do perfil (responsável ou filho).
       onEntrar({ email, password });
+    } else if (isChild) {
+      onConvite({ email, password, code: inviteCode, gender, age: age.trim() ? Number(age) : 0 });
     } else if (inviteCode.trim()) {
       onJoinConvite?.({ email, password, code: inviteCode.trim().toUpperCase() });
     } else {
@@ -250,8 +252,8 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
             </p>
           )}
 
-          {/* FLUXO FILHO: código de convite + escolha de gênero */}
-          {isChild && (
+          {/* FLUXO FILHO (somente Criar Conta): código de convite + idade + gênero */}
+          {authMode === 'cadastrar' && isChild && (
             <div className="space-y-3 animate-fadeIn">
               <div className="relative">
                 <input
@@ -318,10 +320,10 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
           className="w-full py-3 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-cyan-950/50 transition cursor-pointer mb-3 disabled:opacity-60"
         >
           <span>
-            {isChild
-              ? 'Entrar com Convite'
-              : authMode === 'entrar'
+            {authMode === 'entrar'
               ? 'Entrar no Sistema'
+              : isChild
+              ? 'Concluir Cadastro'
               : inviteCode.trim()
               ? 'Entrar na Família'
               : 'Concluir Cadastro'}
