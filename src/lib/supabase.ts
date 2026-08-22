@@ -586,10 +586,12 @@ export const uploadAvatar = async (file: File, familyId: string, profileId: stri
   }
 };
 
-// Account deletion (hard delete via Edge Function using service role)
+// Account deletion (hard delete via Postgres RPC with admin privileges).
+// A RPC `delete_user_account` roda com SECURITY DEFINER e remove os dados do
+// usuário e o próprio auth.users, liberando o e-mail para reuso.
 export const deleteAccount = async (): Promise<void> => {
   if (!isSupabaseConfigured) throw new Error('Servidor indisponível');
-  const { error } = await supabase.functions.invoke('delete-account', {});
+  const { error } = await supabase.rpc('delete_user_account');
   if (error) throw error;
 };
 
