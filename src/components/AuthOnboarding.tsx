@@ -23,10 +23,15 @@ import {
 } from '../lib/avatars';
 import { Profile } from '../types';
 import { ForgotPassword } from './ForgotPassword';
+import RoleSelectionLogin, { type RoleSelectionValue } from './Auth/RoleSelectionLogin';
 import { MotionList, MotionItem } from './motion';
 
 type Mode = 'create' | 'login';
 type JoinStep = 'code' | 'select';
+
+// Senha forte: mínimo 8 caracteres, com pelo menos uma letra e um número.
+const STRONG_PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+const isStrongPassword = (pw: string) => STRONG_PASSWORD_REGEX.test(pw);
 
 const FieldIcon: React.FC<{ icon: LucideIcon; color: string; className?: string }> = ({
   icon: Icon,
@@ -87,6 +92,7 @@ export const AuthOnboarding: React.FC = () => {
   const [familyName, setFamilyName] = useState('');
   const [parentName, setParentName] = useState('');
   const [creatorRel, setCreatorRel] = useState<RelationshipType>('mae');
+  const [roleValue, setRoleValue] = useState<RoleSelectionValue>({ main: 'responsavel', parent: 'mae', childId: null });
   const [inviteCodeInput, setInviteCodeInput] = useState('');
   const [joinStep, setJoinStep] = useState<JoinStep>('code');
   const [joinFamily, setJoinFamily] = useState<FamilyRecord | null>(null);
@@ -96,6 +102,10 @@ export const AuthOnboarding: React.FC = () => {
   const handleCreateAccount = async () => {
     if (!email.trim() || !password.trim()) {
       addToast('Preencha e-mail e senha', 'Necessário para criar sua conta.', 'warning');
+      return;
+    }
+    if (!isStrongPassword(password)) {
+      addToast('Senha fraca', 'Use pelo menos 8 caracteres, incluindo letras e números.', 'warning');
       return;
     }
     if (!familyName.trim() || !parentName.trim()) {
@@ -350,6 +360,11 @@ export const AuthOnboarding: React.FC = () => {
 
           <MotionItem>
             <AuthField icon={LockKeyhole} color="#8455ef" type="password" value={password} onChange={setPassword} placeholder="Senha" />
+            <p className={`mt-1.5 text-[11px] font-medium ${password && !isStrongPassword(password) ? 'text-rose-500' : 'text-slate-400'}`}>
+              {password && !isStrongPassword(password)
+                ? 'Senha fraca: use ao menos 8 caracteres, com letras e números.'
+                : 'Dica de segurança: use ao menos 8 caracteres, com letras e números.'}
+            </p>
           </MotionItem>
 
           {mode === 'create' ? (
@@ -358,37 +373,14 @@ export const AuthOnboarding: React.FC = () => {
                 <AuthField icon={UsersRound} color="#10b981" value={familyName} onChange={setFamilyName} placeholder="Nome da família (ex: Família Silva)" />
                 <AuthField icon={UserPlus} color="#f59e0b" value={parentName} onChange={setParentName} placeholder="Seu nome (responsável)" />
 
-                <div className="rounded-2xl bg-white border border-slate-200 p-4">
-                  <p className="text-xs font-semibold text-slate-500 mb-3 text-left">
-                    Você entra como:
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {GUARDIAN_RELATIONSHIPS.map((rel) => {
-                      const meta = RELATIONSHIP_META[rel];
-                      const selected = creatorRel === rel;
-                      return (
-                        <button
-                          key={rel}
-                          type="button"
-                          onClick={() => setCreatorRel(rel)}
-                          className={`flex flex-col items-center gap-1 rounded-2xl p-2 border-2 transition-all ${
-                            selected ? 'border-transparent shadow-md' : 'border-slate-100 hover:border-slate-200'
-                          }`}
-                          style={selected ? { borderColor: meta.color, background: `${meta.color}10` } : undefined}
-                        >
-                          <span
-                            className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-slate-50"
-                            style={selected ? { boxShadow: `0 0 0 3px ${meta.color}55` } : undefined}
-                          >
-                            <img src={avatarForRelationship(rel, 0)} alt={meta.label} className="w-full h-full object-cover" />
-                          </span>
-                          <span className="text-lg leading-none">{meta.emoji}</span>
-                          <span className="text-[11px] font-bold text-slate-700">{meta.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                <RoleSelectionLogin
+                  value={roleValue}
+                  onChange={(v) => {
+                    setRoleValue(v);
+                    if (v.parent) setCreatorRel(v.parent);
+                  }}
+                  disableChildren
+                />
 
                 <PrimaryButton onClick={handleCreateAccount} disabled={isBusy} icon={UserPlus}>
                   {isBusy ? 'Aguarde...' : 'Criar Conta e Família'}

@@ -90,6 +90,15 @@
   animation: pulse-subtle 2s ease-in-out infinite;
 }
 
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out;
+}
+
 /* Custom smooth scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
