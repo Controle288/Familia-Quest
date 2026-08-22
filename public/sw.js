@@ -6,7 +6,7 @@
    Caching an HTML error/SPA-fallback page for a /assets/*.js URL is what causes
    the "module script MIME type text/html" console errors, so we guard against it. */
 const CACHE = 'familiaquest-v3';
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg'];
+const SHELL = ['/', '/index.html', '/manifest.json', '/icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

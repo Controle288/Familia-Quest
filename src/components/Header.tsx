@@ -31,8 +31,17 @@ export const Header: React.FC = () => {
   return (
     <header className="fixed top-0 left-0 right-0 w-full h-17 bg-[#f8f9ff]/90 backdrop-blur-md z-40 border-b border-indigo-100/60 dark:bg-slate-900/90 dark:border-indigo-800/60 transition-all">
       <div className="max-w-[1600px] mx-auto h-full px-4 md:px-6 xl:px-8 flex justify-between items-center">
-        {/* Left: Avatar & Family Name */}
+        {/* Left: Brand Logo & Family Name */}
         <div className="flex items-center gap-3">
+          <img
+            src="/logo.png"
+            alt="FamilyQuest"
+            className="h-9 w-auto sm:h-10"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/icon.svg';
+            }}
+          />
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="flex items-center gap-2.5 p-1 rounded-full hover:bg-indigo-50/80 transition-all focus:outline-none"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, PlusCircle, KeyRound, Mail, LockKeyhole, ArrowRightCircle, UsersRound, UserPlus, ArrowLeft, X, type LucideIcon } from 'lucide-react';
+import { PlusCircle, KeyRound, Mail, LockKeyhole, ArrowRightCircle, UsersRound, UserPlus, ArrowLeft, X, type LucideIcon } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import {
   createFamilyWithProfiles,
@@ -317,12 +317,15 @@ export const AuthOnboarding: React.FC = () => {
         <MotionList className="glass-card w-full max-w-md rounded-[2rem] p-6 md:p-8 shadow-2xl border border-white/60 space-y-5">
           <MotionItem>
             <header className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-[#4f46e5] to-[#8455ef] rounded-3xl flex items-center justify-center text-white mb-4 shadow-[0px_12px_32px_rgba(79,70,229,0.3)]">
-                <Sparkles className="w-10 h-10 fill-current text-white" />
-              </div>
-              <h1 className="font-heading text-4xl font-extrabold text-[#3525cd] tracking-tight">
-                FamilyQuest
-              </h1>
+              <img
+                src="/logo.png"
+                alt="FamilyQuest Logo"
+                className="h-20 w-auto mx-auto drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/icon.svg';
+                }}
+              />
               <p className="text-slate-600 text-base mt-2 max-w-xs">
                 Transforme a rotina em uma aventura épica para toda a família.
               </p>
