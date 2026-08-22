@@ -15,6 +15,7 @@ import {
   isFamilyPremium,
   upsertFamilySettings,
   getCurrentIsAdmin,
+  removeFamilyMember,
   type AuthUser,
 } from '../lib/supabase';
 import { applyThemePref } from '../lib/themes';
@@ -94,6 +95,7 @@ interface FamilyContextType {
   updateProfile: (profileId: string, patch: Partial<Profile>) => Promise<void>;
   signOut: () => Promise<void>;
   grantAllowance: (profileId: string, amount: number) => Promise<void>;
+  removeMember: (profileId: string) => Promise<void>;
   refreshFamilyData: () => Promise<void>;
 }
 
@@ -830,6 +832,24 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     addToast('Mesada concedida! 💰', `R$ ${amount.toFixed(2)} adicionados para ${target.full_name}.`, 'success');
   };
 
+  // Remove um membro da família (apenas responsáveis). O backend hard-deleta o
+  // auth.users do membro, liberando o e-mail. Se remover a si próprio, sai da sessão.
+  const removeMember = async (profileId: string): Promise<void> => {
+    if (!isSupabaseConfigured) {
+      addToast('Servidor indisponível', undefined, 'error');
+      return;
+    }
+    const selfRemoved = profileId === currentProfile?.id;
+    await removeFamilyMember(profileId);
+    if (selfRemoved) {
+      addToast('Membro removido', 'Sua conta foi excluída.', 'info');
+      await signOut();
+    } else {
+      addToast('Membro removido', 'O acesso e o e-mail da pessoa foram liberados.', 'success');
+      await refreshFamilyData();
+    }
+  };
+
   return (
     <FamilyContext.Provider
       value={{
@@ -875,6 +895,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateProfile,
         signOut,
         grantAllowance,
+        removeMember,
         refreshFamilyData,
       }}
     >

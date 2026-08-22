@@ -334,7 +334,8 @@ export const SettingsTab: React.FC = () => {
         </section>
       )}
 
-      {/* Conta */}
+      {/* Conta — exclusivo de responsáveis (filhos não podem excluir) */}
+      {isGuardian && (
       <section className="rounded-3xl border border-rose-100 bg-white/80 p-5 shadow-sm">
         <h3 className="font-heading text-lg font-bold text-rose-700">Conta</h3>
         <p className="mt-1 text-sm text-slate-500">
@@ -358,6 +359,7 @@ export const SettingsTab: React.FC = () => {
           </div>
         )}
       </section>
+      )}
     </div>
   );
 };

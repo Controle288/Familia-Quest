@@ -607,6 +607,14 @@ export const deleteAccount = async (): Promise<void> => {
   if (error) throw error;
 };
 
+// Remoção de um membro da família por um responsável (RPC com validações).
+// Hard-deleta o auth.users do membro, liberando o e-mail para reuso.
+export const removeFamilyMember = async (profileId: string): Promise<void> => {
+  if (!isSupabaseConfigured) throw new Error('Servidor indisponível');
+  const { error } = await supabase.rpc('remove_family_member', { target_profile_id: profileId });
+  if (error) throw error;
+};
+
 // Member count for free-plan limits
 export const countFamilyMembers = async (familyId: string): Promise<number> => {
   if (!isSupabaseConfigured) return 0;
