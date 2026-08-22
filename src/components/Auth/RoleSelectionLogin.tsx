@@ -69,7 +69,11 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
           <img
             src="/logo.png"
             alt="FamilyQuest Logo"
-            className="h-20 w-auto mx-auto drop-shadow-[0_0_15px_rgba(59,130,246,0.4)] mb-2"
+            className="h-28 w-auto mx-auto drop-shadow-[0_0_25px_rgba(59,130,246,0.6)] mb-3 transition-all duration-300 hover:scale-105"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/icon.svg';
+            }}
           />
           <p className="text-xs text-slate-400">
             Transforme a rotina em uma aventura épica para toda a família.

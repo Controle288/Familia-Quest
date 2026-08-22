@@ -58,6 +58,15 @@ const MainAppContent: React.FC = () => {
         <div className="mx-auto flex w-full max-w-7xl xl:max-w-375 gap-5 xl:gap-7">
           <aside className="hidden lg:flex w-72 shrink-0 flex-col rounded-3xl border border-indigo-100 bg-white/80 p-4 shadow-[0px_10px_30px_rgba(79,70,229,0.08)] backdrop-blur-sm dark:bg-slate-900/80 dark:border-indigo-800/60 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
             <div className="mb-5 px-2">
+              <img
+                src="/logo.png"
+                alt="FamilyQuest"
+                className="h-12 w-auto mb-3"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/icon.svg';
+                }}
+              />
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Menu</p>
               <h2 className="mt-2 font-heading text-xl font-bold text-slate-900">Família</h2>
             </div>
