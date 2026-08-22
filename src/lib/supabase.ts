@@ -644,3 +644,64 @@ export const createCheckout = async (planId: string) => {
   if (error) throw error;
   return data as { url?: string } | null;
 };
+
+// ---- Gestão de famílias pelo admin -----------------------------------------
+
+export interface AdminFamily {
+  id: string;
+  name: string;
+  invite_code: string;
+  responsible: string | null;
+  plan: string;
+  admin_managed: boolean;
+  member_count: number;
+}
+
+// Lista famílias com o responsável (primeiro perfil parent), o plano atual e a
+// contagem de membros. Não expõe e-mails nem dados sensíveis — apenas nomes.
+export const loadAdminFamilies = async (): Promise<AdminFamily[]> => {
+  if (!isSupabaseConfigured) return [];
+  const [{ data: families }, { data: settings }, { data: profiles }] = await Promise.all([
+    supabase.from('families').select('id, name, invite_code'),
+    supabase.from('family_settings').select('family_id, plan, admin_managed'),
+    supabase.from('profiles').select('family_id, full_name, role'),
+  ]);
+
+  const setMap = new Map<string, { plan?: string; admin_managed?: boolean }>(
+    (settings ?? []).map((s: { family_id: string; plan?: string; admin_managed?: boolean }) => [s.family_id, s])
+  );
+  const responsibleByFamily = new Map<string, string>();
+  const countsByFamily = new Map<string, number>();
+  (profiles ?? []).forEach((p: { family_id: string; full_name: string; role?: string }) => {
+    countsByFamily.set(p.family_id, (countsByFamily.get(p.family_id) ?? 0) + 1);
+    if (p.role === 'parent' && !responsibleByFamily.has(p.family_id)) {
+      responsibleByFamily.set(p.family_id, p.full_name);
+    }
+  });
+
+  return (families ?? []).map((f: { id: string; name: string; invite_code: string }) => {
+    const s = setMap.get(f.id);
+    return {
+      id: f.id,
+      name: f.name,
+      invite_code: f.invite_code,
+      responsible: responsibleByFamily.get(f.id) ?? null,
+      plan: s?.plan ?? 'free',
+      admin_managed: Boolean(s?.admin_managed),
+      member_count: countsByFamily.get(f.id) ?? 0,
+    };
+  });
+};
+
+// Concede ou revoga o premium de uma família diretamente pelo admin. Usa a flag
+// admin_managed para que todos os membros (pais e filhos) herdem o acesso.
+export const adminSetFamilyPremium = async (familyId: string, enabled: boolean): Promise<void> => {
+  if (!isSupabaseConfigured) throw new Error('Servidor não configurado');
+  const { error } = await supabase.from('family_settings').upsert({
+    family_id: familyId,
+    plan: enabled ? 'premium' : 'free',
+    admin_managed: enabled,
+    plan_expires_at: null,
+  });
+  if (error) throw error;
+};

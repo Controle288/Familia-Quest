@@ -8,11 +8,14 @@ import {
   adminSavePaymentSettings,
   loadAllTickets,
   adminReplyTicket,
+  loadAdminFamilies,
+  adminSetFamilyPremium,
+  type AdminFamily,
 } from '../lib/supabase';
 import { Plan, PaymentSettings, PaymentProvider, SupportTicket } from '../types';
 import { useFamily } from '../context/FamilyContext';
 
-type AdminSection = 'overview' | 'plans' | 'payments' | 'tickets';
+type AdminSection = 'overview' | 'families' | 'plans' | 'payments' | 'tickets';
 
 const emptyPlan: Omit<Plan, 'id' | 'created_at'> = {
   name: '',
@@ -41,6 +44,10 @@ export const AdminPanel: React.FC = () => {
   const [ticketReply, setTicketReply] = useState<string>('');
   const [openTicketId, setOpenTicketId] = useState<string | null>(null);
 
+  // Families
+  const [families, setFamilies] = useState<AdminFamily[]>([]);
+  const [familyBusy, setFamilyBusy] = useState<string | null>(null);
+
   const refreshPlans = async () => {
     const list = await loadPlans();
     setPlans(list);
@@ -56,6 +63,11 @@ export const AdminPanel: React.FC = () => {
     setPayment(p);
   };
 
+  const refreshFamilies = async () => {
+    const list = await loadAdminFamilies();
+    setFamilies(list);
+  };
+
   const refreshStats = async () => {
     const [{ count: families }, { count: members }, { count: premium }] = await Promise.all([
       supabase.from('families').select('*', { count: 'exact', head: true }),
@@ -69,8 +81,26 @@ export const AdminPanel: React.FC = () => {
     if (section === 'overview') refreshStats();
     if (section === 'plans') refreshPlans();
     if (section === 'payments') refreshPayment();
+    if (section === 'families') refreshFamilies();
     if (section === 'tickets') refreshTickets();
   }, [section]);
+
+  const toggleFamilyPremium = async (fam: AdminFamily) => {
+    setFamilyBusy(fam.id);
+    try {
+      await adminSetFamilyPremium(fam.id, !fam.admin_managed);
+      addToast(
+        fam.admin_managed ? 'Premium revogado' : 'Premium concedido',
+        `A família "${fam.name}" foi atualizada.`,
+        'success'
+      );
+      refreshFamilies();
+    } catch {
+      addToast('Erro ao atualizar a família.', 'error');
+    } finally {
+      setFamilyBusy(null);
+    }
+  };
 
   const handleSavePlan = async () => {
     if (!planDraft || !planDraft.name.trim()) {
@@ -128,6 +158,7 @@ export const AdminPanel: React.FC = () => {
 
   const tabs: { id: AdminSection; label: string }[] = [
     { id: 'overview', label: 'Visão geral' },
+    { id: 'families', label: 'Famílias' },
     { id: 'plans', label: 'Planos' },
     { id: 'payments', label: 'Pagamentos' },
     { id: 'tickets', label: 'Tickets' },
@@ -162,6 +193,49 @@ export const AdminPanel: React.FC = () => {
             <StatCard label="Famílias" value={stats?.families ?? '—'} />
             <StatCard label="Membros" value={stats?.members ?? '—'} />
             <StatCard label="Premium" value={stats?.premium ?? '—'} />
+          </div>
+        )}
+
+        {section === 'families' && (
+          <div className="space-y-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Famílias gerenciadas. Apenas nomes e o responsável são exibidos — nenhum dado sensível (e-mail, senha) é mostrado.
+            </p>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {families.map((fam) => (
+                <div key={fam.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{fam.name}</p>
+                    <p className="text-xs text-slate-500">
+                      Responsável: {fam.responsible ?? '—'} · {fam.member_count} membros · código {fam.invite_code}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                        fam.admin_managed || fam.plan === 'premium'
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
+                      {fam.admin_managed || fam.plan === 'premium' ? 'Premium' : 'Grátis'}
+                    </span>
+                    <button
+                      onClick={() => toggleFamilyPremium(fam)}
+                      disabled={familyBusy === fam.id}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                        fam.admin_managed
+                          ? 'bg-rose-50 text-rose-600 hover:bg-rose-100'
+                          : 'bg-[#3525cd] text-white hover:bg-[#2e1fb5]'
+                      }`}
+                    >
+                      {familyBusy === fam.id ? '…' : fam.admin_managed ? 'Revogar' : 'Tornar Premium'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {families.length === 0 && <p className="text-sm text-slate-400 py-3">Nenhuma família encontrada.</p>}
+            </div>
           </div>
         )}
 
