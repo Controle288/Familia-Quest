@@ -27,6 +27,7 @@ export interface Profile {
   full_name: string;
   role: ProfileRole;
   relationship?: RelationshipType;
+  age?: number;
   avatar_url: string;
   title?: string;
   level: number;

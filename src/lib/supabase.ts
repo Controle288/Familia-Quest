@@ -29,6 +29,7 @@ export type ProfileRecord = {
   full_name: string;
   role: 'parent' | 'child';
   relationship?: 'mae' | 'pai' | 'avo' | 'outro' | 'filho';
+  age?: number;
   avatar_url: string;
   title?: string;
   level: number;

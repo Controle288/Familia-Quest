@@ -148,6 +148,7 @@ export const AuthOnboarding: React.FC = () => {
     password: string;
     code: string;
     gender: 'menino' | 'menina';
+    age: number;
   }) => {
     const email = data.email.trim();
     const password = data.password;
@@ -155,6 +156,10 @@ export const AuthOnboarding: React.FC = () => {
 
     if (!email || !password || !code) {
       addToast('Dados incompletos', 'Informe e-mail, senha e o código de convite.', 'warning');
+      return;
+    }
+    if (!data.age || data.age < 1 || data.age > 120) {
+      addToast('Informe a idade', 'Selecione a idade da criança para configurar o painel.', 'warning');
       return;
     }
     if (!isStrongPassword(password)) {
@@ -193,6 +198,7 @@ export const AuthOnboarding: React.FC = () => {
         full_name: data.gender === 'menina' ? 'Filha' : 'Filho',
         role: 'child',
         relationship: rel,
+        age: data.age,
         avatar_url: avatarForRelationship(rel, avatarIndex),
         title: meta.title,
         level: 1,

@@ -25,6 +25,7 @@ export interface RoleSelectionLoginProps {
     password: string;
     code: string;
     gender: ChildGender;
+    age: number;
   }) => void;
   // Responsável entrando em família existente via código de convite.
   onJoinConvite?: (data: { email: string; password: string; code: string }) => void;
@@ -50,6 +51,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
   const [respName, setRespName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [gender, setGender] = useState<ChildGender>('menino');
+  const [age, setAge] = useState('');
 
   const isChild = selectedRole === 'filho';
 
@@ -62,7 +64,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
 
   const handleSubmit = () => {
     if (isChild) {
-      onConvite({ email, password, code: inviteCode, gender });
+      onConvite({ email, password, code: inviteCode, gender, age: age.trim() ? Number(age) : 0 });
     } else if (authMode === 'entrar') {
       onEntrar({ email, password });
     } else if (inviteCode.trim()) {
@@ -247,6 +249,19 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                   className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 transition"
                 />
                 <KeyRound className="w-4 h-4 text-cyan-400 absolute left-3.5 top-3.5" />
+              </div>
+
+              <div className="relative">
+                <input
+                  type="number"
+                  min={1}
+                  max={17}
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  placeholder="Idade (anos)"
+                  className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 transition"
+                />
+                <User className="w-4 h-4 text-cyan-400 absolute left-3.5 top-3.5" />
               </div>
 
               <div>
