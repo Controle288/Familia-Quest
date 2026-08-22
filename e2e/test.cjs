@@ -20,15 +20,18 @@ const BROWSER = (process.env.BROWSER || 'chromium');
     await page.goto(URL, { waitUntil: 'networkidle' });
     await page.waitForTimeout(800);
 
-    // The official onboarding (create account) must be present.
-    const createBtn = await page.$('button:has-text("Criar Conta e Família")');
-    if (!createBtn) {
-      throw new Error('Onboarding "Criar Conta e Família" not found — demo UI may have leaked.');
+    // Unified onboarding: click the "Criar Conta" tab to reveal the signup form
+    // (family/parent inputs only render in cadastro + responsável mode).
+    const createTab = await page.$('button:has-text("Criar Conta")');
+    if (!createTab) {
+      throw new Error('Onboarding "Criar Conta" tab not found — demo UI may have leaked.');
     }
+    await createTab.click();
+    await page.waitForTimeout(300);
     console.log('onboarding present');
 
-    const familyInput = await page.$('input[placeholder*="Família"]');
-    const parentInput = await page.$('input[placeholder*="responsável"]');
+    const familyInput = await page.$('input[placeholder*="Família" i]');
+    const parentInput = await page.$('input[placeholder*="responsável" i]');
     if (!familyInput || !parentInput) {
       throw new Error('Family/parent name inputs missing from official onboarding.');
     }
