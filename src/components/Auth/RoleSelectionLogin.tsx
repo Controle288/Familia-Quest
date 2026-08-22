@@ -90,31 +90,31 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-start justify-center p-4 py-6 font-sans overflow-y-auto overscroll-none">
-      <div className="w-full max-w-md bg-slate-900/95 border border-slate-800 rounded-3xl p-5 shadow-2xl backdrop-blur-md">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex justify-center p-3 sm:p-4 font-sans overflow-y-auto overscroll-none">
+      <div className="m-auto w-full max-w-2xl bg-slate-900/95 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur-md">
 
         {/* LOGO OFICIAL */}
-        <div className="text-center mb-3">
+        <div className="text-center mb-2 sm:mb-3">
           <img
             src="/logo.png"
             alt="FamilyQuest Logo"
-            className="h-20 w-auto mx-auto drop-shadow-[0_0_25px_rgba(59,130,246,0.6)] mb-2 transition-all duration-300 hover:scale-105"
+            className="h-16 sm:h-20 w-auto mx-auto drop-shadow-[0_0_25px_rgba(59,130,246,0.6)] mb-1.5 sm:mb-2 transition-all duration-300 hover:scale-105"
             onError={(e) => {
               e.currentTarget.onerror = null;
               e.currentTarget.src = '/icon.svg';
             }}
           />
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] sm:text-xs text-slate-400">
             Transforme a rotina em uma aventura épica para toda a família.
           </p>
         </div>
 
         {/* ABAS: ENTRAR / CRIAR CONTA */}
-        <div className="grid grid-cols-2 bg-slate-800/80 p-1 rounded-2xl mb-4 border border-slate-700/60">
+        <div className="grid grid-cols-2 bg-slate-800/80 p-1 rounded-2xl mb-3 sm:mb-4 border border-slate-700/60">
           <button
             type="button"
             onClick={() => setAuthMode('entrar')}
-            className={`py-2 text-xs font-bold rounded-xl transition ${
+            className={`py-2.5 sm:py-2 text-sm sm:text-xs font-bold rounded-xl transition ${
               authMode === 'entrar'
                 ? 'bg-blue-600 text-white shadow-lg'
                 : 'text-slate-400 hover:text-slate-200'
@@ -125,7 +125,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
           <button
             type="button"
             onClick={() => setAuthMode('cadastrar')}
-            className={`py-2 text-xs font-bold rounded-xl transition ${
+            className={`py-2.5 sm:py-2 text-sm sm:text-xs font-bold rounded-xl transition ${
               authMode === 'cadastrar'
                 ? 'bg-purple-600 text-white shadow-lg'
                 : 'text-slate-400 hover:text-slate-200'
@@ -136,8 +136,8 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
         </div>
 
         {/* SELEÇÃO DE PERFIL (RESPONSÁVEIS VS FILHOS) */}
-        <div className="mb-4">
-          <span className="block text-[11px] uppercase tracking-wider font-bold text-slate-400 text-center mb-1.5">
+        <div className="mb-3 sm:mb-4">
+          <span className="block text-[11px] sm:text-xs uppercase tracking-wider font-bold text-slate-400 text-center mb-1.5">
             Você entra como:
           </span>
           <div className="grid grid-cols-2 gap-3">
@@ -182,10 +182,10 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
         </div>
 
         {/* CAMPOS DO FORMULÁRIO */}
-        <div className="space-y-2.5 mb-4">
+        <div className="space-y-2 sm:space-y-2.5 mb-3 sm:mb-4">
           {/* Campos de cadastro (somente responsável): criar família OU entrar via código */}
           {authMode === 'cadastrar' && !isChild && (
-            <div className="space-y-3 animate-fadeIn">
+            <div className="space-y-2 sm:space-y-3 animate-fadeIn">
               {/* Nome da família: visível quando NÃO há código (criando nova família) */}
               {!inviteCode.trim() && (
                 <input
@@ -193,7 +193,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                   value={familyName}
                   onChange={(e) => setFamilyName(e.target.value)}
                   placeholder="Nome da família (ex: Família Silva)"
-                  className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
+                  className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 sm:py-2.5 px-4 pl-10 text-sm sm:text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
                 />
               )}
 
@@ -202,7 +202,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                 value={respName}
                 onChange={(e) => setRespName(e.target.value)}
                  placeholder="Seu nome (Responsável)"
-                 className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
+                 className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 sm:py-2.5 px-4 text-sm sm:text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition"
               />
 
               {/* Código de convite: visível quando NÃO há nome de família (entrando em existente) */}
@@ -213,7 +213,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
                      placeholder="Código de convite (para entrar em família existente)"
-                     className="w-full bg-slate-800/90 border border-pink-500/70 rounded-2xl py-2.5 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-pink-400 transition"
+                     className="w-full bg-slate-800/90 border border-pink-500/70 rounded-2xl py-3 sm:py-2.5 px-4 pl-10 text-sm sm:text-xs text-slate-100 focus:outline-none focus:border-pink-400 transition"
                   />
                   <KeyRound className="w-4 h-4 text-pink-400 absolute left-3.5 top-3.5" />
                 </div>
@@ -227,7 +227,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="E-mail de acesso"
-              className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition"
+              className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 sm:py-2.5 px-4 pl-10 text-sm sm:text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition"
             />
             <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
           </div>
@@ -238,7 +238,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Senha"
-              className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition"
+              className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 sm:py-2.5 px-4 pl-10 text-sm sm:text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition"
             />
             <Shield className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
           </div>
@@ -254,14 +254,14 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
 
           {/* FLUXO FILHO (somente Criar Conta): código de convite + idade + gênero */}
           {authMode === 'cadastrar' && isChild && (
-            <div className="space-y-3 animate-fadeIn">
+            <div className="space-y-2 sm:space-y-3 animate-fadeIn">
               <div className="relative">
                 <input
                   type="text"
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value)}
                    placeholder="Código de convite da família"
-                   className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 transition"
+                   className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 sm:py-2.5 px-4 pl-10 text-sm sm:text-xs text-slate-100 focus:outline-none focus:border-cyan-500 transition"
                 />
                 <KeyRound className="w-4 h-4 text-cyan-400 absolute left-3.5 top-3.5" />
               </div>
@@ -274,20 +274,20 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
                    placeholder="Idade (anos)"
-                   className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-2.5 px-4 pl-10 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 transition"
+                   className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl py-3 sm:py-2.5 px-4 pl-10 text-sm sm:text-xs text-slate-100 focus:outline-none focus:border-cyan-500 transition"
                 />
                 <User className="w-4 h-4 text-cyan-400 absolute left-3.5 top-3.5" />
               </div>
 
               <div>
-                 <span className="block text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+                 <span className="block text-[10px] sm:text-xs uppercase tracking-wider text-slate-400 mb-1">
                   Você é:
                 </span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setGender('menino')}
-                    className={`py-2 rounded-xl text-xs font-bold border-2 transition ${
+                    className={`py-3 sm:py-2 rounded-xl text-sm sm:text-xs font-bold border-2 transition ${
                       gender === 'menino'
                         ? 'border-cyan-400 bg-cyan-950/30 text-white'
                         : 'border-slate-800 text-slate-400 hover:text-slate-200'
@@ -298,7 +298,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
                   <button
                     type="button"
                     onClick={() => setGender('menina')}
-                    className={`py-2 rounded-xl text-xs font-bold border-2 transition ${
+                    className={`py-3 sm:py-2 rounded-xl text-sm sm:text-xs font-bold border-2 transition ${
                       gender === 'menina'
                         ? 'border-pink-400 bg-pink-950/30 text-white'
                         : 'border-slate-800 text-slate-400 hover:text-slate-200'
@@ -317,7 +317,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
           type="button"
           disabled={loading}
           onClick={handleSubmit}
-          className="w-full py-2.5 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-cyan-950/50 transition cursor-pointer mb-2 disabled:opacity-60"
+          className="w-full py-3 sm:py-2.5 px-6 rounded-2xl font-bold text-sm sm:text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-cyan-950/50 transition cursor-pointer mb-2 disabled:opacity-60"
         >
           <span>
             {authMode === 'entrar'
@@ -336,7 +336,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
           <button
             type="button"
             onClick={onEsqueciSenha}
-            className="w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-200"
+            className="w-full text-center text-sm sm:text-xs font-semibold text-slate-400 hover:text-slate-200"
           >
             Esqueci a senha
           </button>
