@@ -1,13 +1,11 @@
-// Componente Principal que gerencia o estado do perfil (idade, tema escolhido,
-// tarefas e recompensas) e seleciona o dashboard correto por faixa etária.
-//
-// Os dados são mockados (src/mocks/familiaDataMock) integrados ao estado para
-// testes rápidos e validação visual. Para integração real, basta alimentar
-// `initialProfile` com os dados do useFamily.
+// Componente Principal que integra os dados reais do useFamily e seleciona o
+// dashboard correto por faixa etária. Os dashboards recebem um `ChildProfile`
+// (formato esperado) montado a partir de Profile / Task / Reward reais.
 
 import React, { useMemo, useState } from 'react';
-import { Settings, Minus, Plus, Palette, Check, Store } from 'lucide-react';
-import { mockChild, ChildProfile, FamiliaTask, FamiliaReward } from '../../mocks/familiaDataMock';
+import { Settings, Palette, Check, Store, Smile, Gamepad2, Wallet } from 'lucide-react';
+import { useFamily } from '../../context/FamilyContext';
+import { ChildProfile, FamiliaTask, FamiliaReward } from '../../mocks/familiaDataMock';
 import { dashboardThemes, themeLabels, themeSwatch, ThemeName, ThemeConfig } from './DashboardThemes';
 import DashboardKids from './DashboardKids';
 import DashboardTeen from './DashboardTeen';
@@ -16,105 +14,150 @@ import DashboardClean from './DashboardClean';
 type AgeMode = 'kids' | 'teen' | 'clean';
 
 interface DashboardFilhoContainerProps {
-  initialProfile?: ChildProfile;
   onGoToShop?: () => void;
 }
 
 const ageModeFromAge = (age: number): AgeMode => (age <= 9 ? 'kids' : age <= 14 ? 'teen' : 'clean');
-const XP_PER_LEVEL = 2000;
 
-const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ initialProfile, onGoToShop }) => {
-  const [profile, setProfile] = useState<ChildProfile>(initialProfile ?? mockChild);
-  const [currentTheme, setCurrentTheme] = useState<ThemeName>('cyberpunk');
+// Mapa de icon_name (Material) -> emoji para os dashboards lúdicos.
+const EMOJI_MAP: Record<string, string> = {
+  cleaning_services: '🧹',
+  bed: '🛏️',
+  menu_book: '📖',
+  pets: '🐕',
+  local_dining: '🍽️',
+  trash: '🗑️',
+  sparkles: '✨',
+  study: '📚',
+  clothes: '👕',
+  game: '🎮',
+  shopping: '🛍️',
+  heart: '❤️',
+  smile: '😊',
+};
+
+const statusToMock = (s: string): FamiliaTask['status'] =>
+  s === 'completed' ? 'concluida' : s === 'waiting_approval' ? 'em_progresso' : 'pendente';
+
+const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ onGoToShop }) => {
+  const { currentProfile, tasks, rewards, completeTask, redeemReward } = useFamily();
+
+  const [currentTheme, setCurrentTheme] = useState<ThemeName>('ocean');
   const [showSettings, setShowSettings] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [ageMode, setAgeMode] = useState<AgeMode>(ageModeFromAge(currentProfile?.age ?? 0));
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const themeConfig: ThemeConfig = dashboardThemes[currentTheme];
-  const ageMode = ageModeFromAge(profile.age);
-  const modeLabel = ageMode === 'kids' ? 'Kids' : ageMode === 'teen' ? 'Teen / Gamer' : 'Young Adult';
 
   const flash = (msg: string) => {
     setToast(msg);
     window.setTimeout(() => setToast(null), 2200);
   };
 
-  // Marca uma tarefa como concluída e credita pontos/xp/saldo ao perfil.
-  const handleCompleteTask = (id: string) => {
-    setProfile((prev) => {
-      const task = prev.tasks.find((t) => t.id === id);
-      if (!task || task.status === 'concluida') return prev;
-      const xp = prev.xp + (task.xp ?? 0);
-      const gained = task.monetaryValue ?? task.points / 100;
-      return {
-        ...prev,
-        xp,
-        level: Math.floor(xp / XP_PER_LEVEL) + 1,
-        points: prev.points + task.points,
-        balance: Math.round((prev.balance + gained) * 100) / 100,
-        tasks: prev.tasks.map((t): FamiliaTask =>
-          t.id === id ? { ...t, status: 'concluida' } : t
-        ),
-      };
-    });
-    flash('Missão concluída! ⭐');
-  };
+  // Monta o perfil no formato esperado pelos dashboards, a partir dos dados reais.
+  const profile: ChildProfile | null = useMemo(() => {
+    if (!currentProfile) return null;
+    const childTasks: FamiliaTask[] = tasks
+      .filter((t) => t.assigned_to === currentProfile.id)
+      .map((t) => ({
+        id: t.id,
+        name: t.title,
+        points: t.points,
+        xp: t.points,
+        monetaryValue: t.reward_money ?? t.points / 100,
+        emoji: EMOJI_MAP[t.icon_name] ?? '📌',
+        description: t.description ?? '',
+        status: statusToMock(t.status),
+      }));
+    const availableRewards: FamiliaReward[] = rewards
+      .filter((r) => r.is_available)
+      .map((r) => ({
+        id: r.id,
+        name: r.title,
+        cost: r.points_cost,
+        monetaryCost: r.money_cost,
+        emoji: '🎁',
+      }));
 
-  // Resgata uma recompensa (deduz pontos) e a remove da lista disponível.
-  const handleRedeem = (reward: FamiliaReward) => {
-    if (profile.points < reward.cost) {
-      flash('Você ainda não tem pontos suficientes.');
-      return;
+    return {
+      id: currentProfile.id,
+      name: currentProfile.full_name || currentProfile.name,
+      age: currentProfile.age ?? 0,
+      avatarUrl: currentProfile.avatar_url || undefined,
+      points: currentProfile.xp,
+      xp: currentProfile.xp,
+      level: currentProfile.level,
+      balance: currentProfile.balance,
+      financialGoal: null,
+      tasks: childTasks,
+      availableRewards,
+    };
+  }, [currentProfile, tasks, rewards]);
+
+  const handleCompleteTask = async (id: string) => {
+    if (busyId) return;
+    setBusyId(id);
+    try {
+      await completeTask(id);
+      flash('Missão concluída! ⭐');
+    } catch {
+      flash('Não foi possível concluir a missão.');
+    } finally {
+      setBusyId(null);
     }
-    setProfile((prev) => ({
-      ...prev,
-      points: prev.points - reward.cost,
-      availableRewards: prev.availableRewards.filter((r) => r.id !== reward.id),
-    }));
-    flash(`Resgatado: ${reward.emoji} ${reward.name}!`);
   };
 
-  const setAge = (age: number) => {
-    const clamped = Math.max(1, Math.min(17, age));
-    setProfile((prev) => ({ ...prev, age: clamped }));
+  const handleRedeem = async (reward: FamiliaReward) => {
+    try {
+      const ok = await redeemReward(reward.id);
+      flash(ok ? `Resgatado: ${reward.emoji} ${reward.name}!` : 'Você não tem pontos suficientes.');
+    } catch {
+      flash('Não foi possível resgatar.');
+    }
   };
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-slate-400">
+        Carregando seu painel…
+      </div>
+    );
+  }
 
   const commonProps = { profile, theme: themeConfig, onCompleteTask: handleCompleteTask, onRedeem: handleRedeem };
 
   return (
     <div className={`min-h-screen ${themeConfig.bg} p-4 md:p-6 ${themeConfig.text} font-sans relative`}>
-      {/* Cabeçalho */}
-      <header className={`flex items-center justify-between pb-5 mb-6 ${themeConfig.border} border-b`}>
+      {/* Barra de controles: modo por idade + tema */}
+      <header className={`flex flex-wrap items-center justify-between gap-3 pb-5 mb-6 ${themeConfig.border} border-b`}>
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className={`text-xl md:text-2xl font-extrabold ${themeConfig.primary}`}>FamiliaQuest</h1>
           <span className={`text-xs md:text-sm ${themeConfig.textMuted}`}>
-            {profile.name}, {profile.age} anos • Modo {modeLabel}
+            {profile.name}{profile.age ? `, ${profile.age} anos` : ''} • Modo {ageMode === 'kids' ? 'Kids' : ageMode === 'teen' ? 'Teen / Gamer' : 'Young Adult'}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Seletor de idade (para validação visual dos modos) */}
-          <div className={`flex items-center rounded-full ${themeConfig.accent} ${themeConfig.border} border overflow-hidden`}>
-            <button onClick={() => setAge(profile.age - 1)} className={`px-2.5 py-1.5 ${themeConfig.text} active:scale-90 transition`} title="Diminuir idade">
-              <Minus className="w-4 h-4" />
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Seletor de modo por idade (preview) */}
+          <div className={`flex items-center rounded-full ${themeConfig.accent} ${themeConfig.border} border p-1`}>
+            <button onClick={() => setAgeMode('kids')} className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 ${ageMode === 'kids' ? themeConfig.primaryBg + ' ' + themeConfig.primaryText : themeConfig.text}`}>
+              <Smile className="w-3.5 h-3.5" /> Kids
             </button>
-            <span className={`px-1 text-xs font-bold ${themeConfig.textMuted}`}>idade</span>
-            <button onClick={() => setAge(profile.age + 1)} className={`px-2.5 py-1.5 ${themeConfig.text} active:scale-90 transition`} title="Aumentar idade">
-              <Plus className="w-4 h-4" />
+            <button onClick={() => setAgeMode('teen')} className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 ${ageMode === 'teen' ? themeConfig.primaryBg + ' ' + themeConfig.primaryText : themeConfig.text}`}>
+              <Gamepad2 className="w-3.5 h-3.5" /> Teen
+            </button>
+            <button onClick={() => setAgeMode('clean')} className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 ${ageMode === 'clean' ? themeConfig.primaryBg + ' ' + themeConfig.primaryText : themeConfig.text}`}>
+              <Wallet className="w-3.5 h-3.5" /> Adult
             </button>
           </div>
+
           {onGoToShop && (
-            <button
-              onClick={onGoToShop}
-              className={`p-2 rounded-full ${themeConfig.primaryBg} ${themeConfig.primaryText}`}
-              title="Ir para a Loja"
-            >
+            <button onClick={onGoToShop} className={`p-2 rounded-full ${themeConfig.primaryBg} ${themeConfig.primaryText}`} title="Ir para a Loja">
               <Store className="w-5 h-5" />
             </button>
           )}
-          <button
-            onClick={() => setShowSettings((s) => !s)}
-            className={`p-2 rounded-full ${themeConfig.accent} ${themeConfig.border} border ${themeConfig.primary}`}
-            title="Alterar Tema"
-          >
+          <button onClick={() => setShowSettings((s) => !s)} className={`p-2 rounded-full ${themeConfig.accent} ${themeConfig.border} border ${themeConfig.primary}`} title="Alterar Tema">
             <Settings className="w-5 h-5" />
           </button>
         </div>
@@ -128,10 +171,7 @@ const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ initi
       {/* Modal de seleção de tema */}
       {showSettings && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={() => setShowSettings(false)}>
-          <div
-            className={`${themeConfig.card} ${themeConfig.border} border rounded-2xl p-6 w-full max-w-sm shadow-2xl`}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className={`${themeConfig.card} ${themeConfig.border} border rounded-2xl p-6 w-full max-w-sm shadow-2xl`} onClick={(e) => e.stopPropagation()}>
             <h2 className={`text-lg font-extrabold mb-4 flex items-center gap-2 ${themeConfig.primary}`}>
               <Palette className="w-5 h-5" /> Selecione o Tema
             </h2>
@@ -140,24 +180,17 @@ const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ initi
                 <button
                   key={name}
                   onClick={() => setCurrentTheme(name)}
-                  className={`relative p-4 rounded-xl border-2 text-left transition ${
-                    currentTheme === name ? `${themeConfig.border} ${themeConfig.primary}` : 'border-transparent'
-                  } bg-white/5`}
+                  className={`relative p-4 rounded-xl border-2 text-left transition ${currentTheme === name ? `${themeConfig.border} ${themeConfig.primary}` : 'border-transparent'} bg-white/5`}
                 >
                   <span className={`block h-8 w-full rounded-lg bg-gradient-to-r ${themeSwatch[name]} mb-2`} />
                   <span className={`text-sm font-bold capitalize ${themeConfig.text}`}>{themeLabels[name]}</span>
                   {currentTheme === name && (
-                    <span className={`absolute top-2 right-2 ${themeConfig.primary}`}>
-                      <Check className="w-4 h-4" />
-                    </span>
+                    <span className={`absolute top-2 right-2 ${themeConfig.primary}`}><Check className="w-4 h-4" /></span>
                   )}
                 </button>
               ))}
             </div>
-            <button
-              onClick={() => setShowSettings(false)}
-              className={`mt-5 w-full p-2.5 text-sm font-bold rounded-lg ${themeConfig.primaryBg} ${themeConfig.primaryText}`}
-            >
+            <button onClick={() => setShowSettings(false)} className={`mt-5 w-full p-2.5 text-sm font-bold rounded-lg ${themeConfig.primaryBg} ${themeConfig.primaryText}`}>
               Fechar
             </button>
           </div>
