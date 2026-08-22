@@ -1,65 +1,107 @@
-// Dashboard para Modo Teen/Gamer (10-14 anos) - Dark/Neon, XP, Nível, Achievements, RPG
+// Dashboard para Modo Teen / Gamer (10 a 14 anos)
+// Visual Dark/Neon estilo Discord/Steam. Foco em XP, nível, sistema de
+// conquistas (achievements) e barra de progresso estilo RPG.
 
 import React from 'react';
-import { Swords, Zap, Trophy, Goal } from 'lucide-react';
+import { Swords, Zap, Trophy, Goal, Lock, Check, Sparkles } from 'lucide-react';
 import { ChildProfile, FamiliaTask, FamiliaReward } from '../../mocks/familiaDataMock';
 import { ThemeConfig } from './DashboardThemes';
 
 interface DashboardTeenProps {
   profile: ChildProfile;
   theme: ThemeConfig;
+  onCompleteTask: (id: string) => void;
+  onRedeem: (reward: FamiliaReward) => void;
 }
 
-const DashboardTeen: React.FC<DashboardTeenProps> = ({ profile, theme }) => {
-  // Meta do Teen: usa a primeira recompensa disponível como "Wishlist"
-  const currentGoal: FamiliaReward = profile.availableRewards[0];
+const XP_PER_LEVEL = 2000;
+
+const ACHIEVEMENTS = [
+  { id: 'a1', emoji: '📚', label: 'Leitor Focado', unlocked: true },
+  { id: 'a2', emoji: '🪥', label: 'Dente Limpo', unlocked: true },
+  { id: 'a3', emoji: '🐕', label: 'Passeador Master', unlocked: false },
+  { id: 'a4', emoji: '🧹', label: 'Mestre do Quarto', unlocked: false },
+  { id: 'a5', emoji: '➗', label: 'Mestre da Maths', unlocked: true },
+  { id: 'a6', emoji: '🎮', label: 'Gamer Supremo', unlocked: false },
+];
+
+const DashboardTeen: React.FC<DashboardTeenProps> = ({ profile, theme, onCompleteTask, onRedeem }) => {
+  const xpInLevel = profile.xp % XP_PER_LEVEL;
+  const xpProgress = Math.round((xpInLevel / XP_PER_LEVEL) * 100);
+  const currentGoal: FamiliaReward | undefined = profile.availableRewards[0];
+  const canRedeem = !!currentGoal && profile.points >= currentGoal.cost;
 
   return (
     <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      {/* Perfil e Barra de XP */}
-      <section>
-        <div className={`${theme.card} p-6 rounded-2xl ${theme.border} border-2`}>
-          <div className="flex items-center gap-4 mb-4">
-            <img src={profile.avatarUrl} alt="Avatar" className={`w-16 h-16 rounded-full ${theme.border} border-2 p-1`} />
-            <div>
-              <p className="text-xl font-bold flex items-center gap-2"><Swords className={`w-5 h-5 ${theme.primary}`} /> {profile.name} </p>
-              <p className={`text-sm ${theme.secondary}`}>Classe: Estudante Herói</p>
-            </div>
+      {/* PERFIL + BARRA DE XP (RPG) */}
+      <section className={`${theme.card} ${theme.border} border rounded-2xl p-6 ${theme.glow}`}>
+        <div className="flex items-center gap-4 mb-5">
+          <div className={`w-16 h-16 rounded-full ${theme.accent} ${theme.border} border-2 flex items-center justify-center text-3xl overflow-hidden`}>
+            {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" /> : '🦸'}
           </div>
-          <div className='mb-3'>
-            <div className='flex items-center justify-between mb-1 text-sm font-semibold'>
-              <span>XP Atual ({profile.xp}/2000)</span>
-              <span className={`${theme.primary}`}>LVL {profile.level}</span>
-            </div>
-            <div className={`w-full ${theme.accent} rounded-full h-3 overflow-hidden`}>
-              <div
-                className={`h-full ${theme.primary} transition-all duration-500`}
-                style={{ width: `${(profile.xp / 2000) * 100}%` }}
-              ></div>
-            </div>
+          <div>
+            <p className={`text-xl font-extrabold flex items-center gap-2 ${theme.text}`}>
+              <Swords className={`w-5 h-5 ${theme.primary}`} /> {profile.name}
+            </p>
+            <p className={`text-sm ${theme.secondary} font-semibold`}>Classe: Estudante Herói</p>
           </div>
-          <p className="text-sm font-semibold text-center flex items-center justify-center gap-2">⭐ {profile.points} Pontos para Lojinha</p>
         </div>
+
+        {/* Barra de XP estilo RPG */}
+        <div className="mb-2 flex items-center justify-between text-sm font-bold">
+          <span className={theme.textMuted}>XP {xpInLevel}/{XP_PER_LEVEL}</span>
+          <span className={`${theme.primary} flex items-center gap-1`}>
+            <Sparkles className="w-4 h-4" /> LVL {profile.level}
+          </span>
+        </div>
+        <div className={`w-full ${theme.accent} rounded-full h-4 overflow-hidden ${theme.border} border`}>
+          <div
+            className={`h-full ${theme.primaryBg} transition-all duration-700 relative`}
+            style={{ width: `${xpProgress}%` }}
+          >
+            <div className="absolute inset-0 bg-white/20 animate-pulse" />
+          </div>
+        </div>
+        <p className={`mt-4 text-center text-sm font-bold flex items-center justify-center gap-2 ${theme.secondary}`}>
+          ⭐ {profile.points} Pontos para a Lojinha
+        </p>
       </section>
 
-      {/* Missões Ativas - Modo Gamer */}
+      {/* MISSÕES ATIVAS (QUEST LOG) */}
       <section className="col-span-1 lg:col-span-2">
-        <div className={`${theme.card} p-6 rounded-2xl ${theme.border} border-2 shadow-lg`}>
-          <h3 className="text-lg font-bold mb-5 flex items-center gap-2"><Swords className={`w-5 h-5 ${theme.primary}`} /> Missões do Dia (Quest Log)</h3>
+        <div className={`${theme.card} ${theme.border} border rounded-2xl p-6`}>
+          <h3 className={`text-lg font-extrabold mb-5 flex items-center gap-2 ${theme.text}`}>
+            <Swords className={`w-5 h-5 ${theme.primary}`} /> Missões do Dia (Quest Log)
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {profile.tasks.map((task: FamiliaTask) => (
               <div
                 key={task.id}
-                className={`flex items-center gap-4 p-4 rounded-lg border-2 ${task.status === 'concluida' ? 'border-teal-500 bg-teal-950/20' : task.status === 'em_progresso' ? 'border-amber-500 bg-amber-950/20' : 'border-gray-600 bg-gray-900'} hover:border-cyan-400 transition`}
+                className={`group flex items-center gap-4 p-4 rounded-xl border-2 transition ${
+                  task.status === 'concluida'
+                    ? 'border-emerald-500 bg-emerald-500/10'
+                    : task.status === 'em_progresso'
+                    ? 'border-amber-500 bg-amber-500/10'
+                    : `${theme.border} bg-black/20 hover:border-cyan-400`
+                }`}
               >
-                <div className='p-3 bg-gray-800 rounded-lg'>{task.emoji}</div>
-                <div className="flex-1">
-                  <p className={`font-bold ${theme.primary}`}>{task.name}</p>
+                <div className={`p-3 rounded-lg ${theme.accent} text-2xl`}>{task.emoji}</div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-bold ${theme.text} truncate`}>{task.name}</p>
                   <p className={`text-xs ${theme.textMuted}`}>{task.description}</p>
                 </div>
-                <div className={`flex items-center gap-1 text-xs font-semibold ${theme.primary}`}>
-                  <Zap size={14}/> +{task.points} ⭐ / +{task.xp ?? 0} XP
+                <div className={`flex flex-col items-end gap-1 text-xs font-bold ${theme.primary}`}>
+                  <span className="flex items-center gap-1"><Zap className="w-3.5 h-3.5" /> +{task.points}⭐ / +{task.xp ?? 0} XP</span>
+                  {task.status === 'concluida' ? (
+                    <span className="text-emerald-400 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Done</span>
+                  ) : (
+                    <button
+                      onClick={() => onCompleteTask(task.id)}
+                      className={`mt-1 px-3 py-1 rounded-lg text-[11px] font-extrabold ${theme.primaryBg} ${theme.primaryText} active:scale-95 transition`}
+                    >
+                      Concluir
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -67,31 +109,50 @@ const DashboardTeen: React.FC<DashboardTeenProps> = ({ profile, theme }) => {
         </div>
       </section>
 
-      {/* Conquistas (Achievements) */}
-      <section>
-        <div className={`${theme.card} p-6 rounded-2xl ${theme.border} border-2`}>
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Trophy className={`w-5 h-5 ${theme.primary}`} /> Minhas Conquistas (Trophy Room)</h3>
-          <div className="grid grid-cols-4 gap-3 text-center">
-            <div className='p-2 bg-gray-800 rounded-lg flex flex-col items-center'><span className='text-3xl'>📚</span><span className='text-xs'>Leitor Focado</span></div>
-            <div className='p-2 bg-gray-800 rounded-lg flex flex-col items-center'><span className='text-3xl'>🪥</span><span className='text-xs'>Dente Limpo</span></div>
-            <div className='p-2 bg-gray-800 rounded-lg flex flex-col items-center opacity-40'><span className='text-3xl'>🐕</span><span className='text-xs'>Passeador Master</span></div>
-            <div className='p-2 bg-gray-800 rounded-lg flex flex-col items-center opacity-40'><span className='text-3xl'>🧹</span><span className='text-xs'>Mestre do Quarto</span></div>
-          </div>
+      {/* CONQUISTAS (TROPHY ROOM) */}
+      <section className={`${theme.card} ${theme.border} border rounded-2xl p-6`}>
+        <h3 className={`text-lg font-extrabold mb-4 flex items-center gap-2 ${theme.text}`}>
+          <Trophy className={`w-5 h-5 ${theme.primary}`} /> Conquistas
+        </h3>
+        <div className="grid grid-cols-3 gap-3">
+          {ACHIEVEMENTS.map((a) => (
+            <div
+              key={a.id}
+              className={`p-3 rounded-xl flex flex-col items-center text-center gap-1 ${a.unlocked ? theme.accent : 'bg-black/30'} ${
+                a.unlocked ? '' : 'opacity-40'
+              }`}
+            >
+              <span className="text-3xl">{a.unlocked ? a.emoji : <Lock className="w-6 h-6" />}</span>
+              <span className={`text-[10px] font-bold ${theme.textMuted}`}>{a.label}</span>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Meta do Teen */}
+      {/* META / WISHLIST */}
       <section className="col-span-1 lg:col-span-2">
-        <div className={`${theme.card} p-6 rounded-2xl ${theme.border} border-2`}>
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Goal className={`w-5 h-5 ${theme.primary}`} /> Minha Meta (Wishlist)</h3>
-          <div className='flex items-center gap-5'>
-            <div className='p-4 bg-gray-800 rounded-lg'><span className='text-4xl'>{currentGoal.emoji}</span></div>
-            <div className='flex-1'>
-              <p className='font-bold'>{currentGoal.name}</p>
-              <p className='text-sm text-cyan-400'>Custo: ⭐ {currentGoal.cost} Pontos</p>
+        <div className={`${theme.card} ${theme.border} border rounded-2xl p-6`}>
+          <h3 className={`text-lg font-extrabold mb-4 flex items-center gap-2 ${theme.text}`}>
+            <Goal className={`w-5 h-5 ${theme.primary}`} /> Minha Meta (Wishlist)
+          </h3>
+          {currentGoal ? (
+            <div className="flex items-center gap-5">
+              <div className={`p-4 rounded-xl ${theme.accent} text-4xl`}>{currentGoal.emoji}</div>
+              <div className="flex-1">
+                <p className={`font-bold ${theme.text}`}>{currentGoal.name}</p>
+                <p className={`text-sm ${theme.secondary} font-semibold`}>Custo: ⭐ {currentGoal.cost} Pontos</p>
+              </div>
+              <button
+                disabled={!canRedeem}
+                onClick={() => onRedeem(currentGoal)}
+                className={`px-5 py-3 rounded-xl font-extrabold text-sm ${theme.primaryBg} ${theme.primaryText} disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition`}
+              >
+                {canRedeem ? 'Trocar Pontos' : 'Junta Pontos'}
+              </button>
             </div>
-            <button className={`${theme.primary} ${theme.border} border p-3 rounded-xl hover:bg-gray-700 transition`}>Trocar Pontos</button>
-          </div>
+          ) : (
+            <p className={`${theme.textMuted}`}>Nenhuma recompensa na wishlist ainda.</p>
+          )}
         </div>
       </section>
     </main>

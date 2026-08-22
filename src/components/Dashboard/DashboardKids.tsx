@@ -1,81 +1,149 @@
-// Dashboard para Modo Kids (até 9 anos) - Lúdico, Emojis, Estrelas, Aventuras
+// Dashboard para Modo Kids (até 9 anos)
+// Visual colorido, lúdico e em formato de mapa de aventura/jogo.
+// Botões grandes, emojis de tarefas e barra de recompensas com foco em estrelas/pontos.
 
 import React from 'react';
-import { CircleAlert } from 'lucide-react';
+import { Star, Gift, PartyPopper, Check, Lock } from 'lucide-react';
 import { ChildProfile, FamiliaTask, FamiliaReward } from '../../mocks/familiaDataMock';
 import { ThemeConfig } from './DashboardThemes';
 
 interface DashboardKidsProps {
   profile: ChildProfile;
   theme: ThemeConfig;
+  onCompleteTask: (id: string) => void;
+  onRedeem: (reward: FamiliaReward) => void;
 }
 
-const DashboardKids: React.FC<DashboardKidsProps> = ({ profile, theme }) => {
-  const nextReward: FamiliaReward = profile.availableRewards[0]; // Pega a primeira como exemplo
+const taskNodeStyles: Record<FamiliaTask['status'], string> = {
+  concluida: 'bg-emerald-400 border-emerald-500 scale-100',
+  em_progresso: 'bg-amber-300 border-amber-400 animate-pulse',
+  pendente: 'bg-white border-dashed border-2 border-slate-300 hover:scale-105',
+};
+
+const DashboardKids: React.FC<DashboardKidsProps> = ({ profile, theme, onCompleteTask, onRedeem }) => {
+  const nextReward: FamiliaReward | undefined = profile.availableRewards.find((r) => profile.points < r.cost);
+  const progress = nextReward ? Math.min(100, Math.round((profile.points / nextReward.cost) * 100)) : 100;
+  const canRedeem = !!nextReward && profile.points >= nextReward.cost;
 
   return (
-    <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      
-      {/* Mapa de Aventuras (Placeholder) */}
-      <section className="col-span-1 lg:col-span-2">
-        <div className={`${theme.card} p-8 rounded-3xl ${theme.border} border-2 shadow-inner relative flex flex-col items-center justify-center min-h-[300px]`}>
-          <h2 className="text-xl font-bold mb-5 flex items-center gap-2">🗺️ Meu Mapa de Aventuras</h2>
-          <div className="flex gap-4">
-            <span className="text-3xl">🏞️</span>
-            <span className="text-3xl">🏞️</span>
-            <span className="text-2xl text-amber-500 font-bold flex items-center gap-2">⭐ {profile.points}</span>
-            <span className="text-3xl">🏞️</span>
-            <span className="text-3xl">🏡</span>
+    <main className="space-y-6">
+      {/* HERÓI / CABEÇALHO LÚDICO */}
+      <section className={`${theme.card} ${theme.border} border-2 rounded-3xl p-6 flex items-center justify-between ${theme.glow}`}>
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center text-4xl shadow-inner">
+            {profile.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="" className="w-14 h-14 rounded-full object-cover" />
+            ) : (
+              '🧒'
+            )}
           </div>
-          <div className={`mt-6 p-4 text-sm ${theme.primary} font-bold rounded-2xl ${theme.border} border text-center`}>Nível {profile.level} - Happy Face! 🙂</div>
+          <div>
+            <h2 className={`text-2xl font-extrabold ${theme.text}`}>{profile.name}</h2>
+            <p className={`${theme.secondary} font-bold text-sm`}>Nível {profile.level} • Aventureiro(a)! 🎒</p>
+          </div>
+        </div>
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${theme.accent} ${theme.primary} font-extrabold text-lg`}>
+          <Star className="w-5 h-5 fill-current" /> {profile.points}
         </div>
       </section>
 
-      {/* Próxima Recompensa */}
-      <section>
-        <div className={`${theme.card} p-6 rounded-2xl ${theme.border} border-2 shadow-lg`}>
-          <h3 className={`text-lg font-bold mb-4 ${theme.primary} text-center`}>✨ Próxima Recompensa</h3>
-          <div className="flex items-center gap-4 p-4 rounded-xl ${theme.accent}">
-            <span className="text-4xl">{nextReward.emoji}</span>
-            <div>
-              <p className="font-bold">{nextReward.name}</p>
-              <p className="text-sm font-semibold flex items-center gap-1">⭐ {nextReward.cost} Estrelas</p>
+      {/* MAPA DE AVENTURA */}
+      <section className={`${theme.card} ${theme.border} border-2 rounded-3xl p-6`}>
+        <h3 className={`font-extrabold text-lg mb-5 flex items-center gap-2 ${theme.text}`}>
+          🗺️ Meu Mapa de Aventuras
+        </h3>
+        <div className="relative flex items-center justify-between gap-2 overflow-x-auto pb-2">
+          {/* trilha */}
+          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-slate-200/70 rounded-full" />
+          {profile.tasks.map((task, i) => (
+            <button
+              key={task.id}
+              onClick={() => task.status !== 'concluida' && onCompleteTask(task.id)}
+              title={task.name}
+              className={`relative z-10 shrink-0 w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-transform ${taskNodeStyles[task.status]} ${theme.text}`}
+            >
+              <span className="text-3xl leading-none">{task.status === 'concluida' ? '✅' : task.emoji}</span>
+              {task.status === 'concluida' ? (
+                <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-0.5">
+                  <Check className="w-3 h-3" /> Pronto
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold text-slate-500">Passo {i + 1}</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <p className={`text-center text-xs mt-4 ${theme.textMuted}`}>
+          Toque nas paradas para concluir as missões e ganhar ⭐ estrelas!
+        </p>
+      </section>
+
+      {/* PRÓXIMA RECOMPENSA + BARRA */}
+      <section className={`${theme.card} ${theme.border} border-2 rounded-3xl p-6`}>
+        <h3 className={`font-extrabold text-lg mb-4 flex items-center gap-2 ${theme.text}`}>
+          <Gift className="w-5 h-5" /> Próxima Recompensa
+        </h3>
+        {nextReward ? (
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-white/70 flex items-center justify-center text-4xl shrink-0">
+              {nextReward.emoji}
             </div>
+            <div className="flex-1 min-w-0">
+              <p className={`font-bold ${theme.text} truncate`}>{nextReward.name}</p>
+              <p className={`text-sm ${theme.secondary} font-semibold flex items-center gap-1`}>
+                <Star className="w-4 h-4 fill-current" /> {nextReward.cost} estrelas
+              </p>
+              <div className={`mt-2 w-full h-4 rounded-full ${theme.accent} ${theme.border} border overflow-hidden`}>
+                <div className={`h-full ${theme.primaryBg} transition-all duration-500`} style={{ width: `${progress}%` }} />
+              </div>
+              <p className={`text-[11px] mt-1 ${theme.textMuted}`}>{progress}% conquistado</p>
+            </div>
+            <button
+              disabled={!canRedeem}
+              onClick={() => onRedeem(nextReward)}
+              className={`shrink-0 px-4 py-3 rounded-2xl font-extrabold text-sm ${theme.primaryBg} ${theme.primaryText} disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition`}
+            >
+              {canRedeem ? 'Resgatar!' : 'Junta + ⭐'}
+            </button>
           </div>
-        </div>
+        ) : (
+          <div className={`flex items-center gap-3 ${theme.accent} rounded-2xl p-4 ${theme.text}`}>
+            <PartyPopper className="w-6 h-6" />
+            <p className="font-bold">Uau! Você resgatou tudo! 🎉</p>
+          </div>
+        )}
       </section>
 
-      {/* Lista de Tarefas - Modo Kids */}
-      <section className="col-span-1 md:col-span-2 lg:col-span-3">
-        <div className={`${theme.card} p-6 rounded-2xl ${theme.border} border-2 shadow-lg`}>
-          <h3 className="text-lg font-bold mb-5 flex items-center gap-2">✅ Minhas Aventuras do Dia</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {profile.tasks.map((task: FamiliaTask) => (
-              <div
-                key={task.id}
-                className={`flex items-center gap-4 p-5 rounded-xl border-2 ${task.status === 'concluida' ? 'border-teal-500 bg-teal-950/20' : task.status === 'em_progresso' ? 'border-amber-500 bg-amber-950/20' : 'border-gray-600 bg-gray-900'}`}
+      {/* LISTA DE TAREFAS (CARTÕES GRANDES) */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {profile.tasks.map((task) => (
+          <div
+            key={task.id}
+            className={`rounded-3xl border-2 p-5 flex flex-col items-center text-center gap-2 ${theme.card} ${theme.border} ${
+              task.status === 'concluida' ? 'opacity-80' : ''
+            }`}
+          >
+            <span className="text-5xl">{task.status === 'concluida' ? '✅' : task.emoji}</span>
+            <p className={`font-extrabold ${theme.text}`}>{task.name}</p>
+            <p className={`text-xs ${theme.textMuted}`}>{task.description}</p>
+            <span className={`mt-1 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${theme.accent} ${theme.secondary}`}>
+              <Star className="w-3.5 h-3.5 fill-current" /> {task.points}
+            </span>
+            {task.status !== 'concluida' && (
+              <button
+                onClick={() => onCompleteTask(task.id)}
+                className={`mt-1 w-full py-2.5 rounded-2xl font-extrabold ${theme.primaryBg} ${theme.primaryText} active:scale-95 transition`}
               >
-                <span className="text-4xl">{task.emoji}</span>
-                <div className="flex-1">
-                  <p className={`font-bold ${theme.primary}`}>{task.name}</p>
-                  <p className={`text-sm ${theme.textMuted}`}>{task.description}</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  {task.status === 'concluida' ? (
-                    <span className="text-teal-400">✔️ Salva</span>
-                  ) : task.status === 'em_progresso' ? (
-                    <span className="text-amber-400">🚧 Fazendo</span>
-                  ) : (
-                    <span className="text-gray-400 flex items-center gap-1"><CircleAlert size={16}/> Pendente</span>
-                  )}
-                  <span className={`text-sm font-semibold ${theme.secondary} flex items-center gap-1`}>
-                    ⭐ {task.points} Pontos
-                  </span>
-                </div>
-              </div>
-            ))}
+                Concluir ✅
+              </button>
+            )}
+            {task.status === 'concluida' && (
+              <span className={`mt-1 w-full py-2.5 rounded-2xl font-extrabold flex items-center justify-center gap-1 ${theme.accent} ${theme.secondary}`}>
+                <Check className="w-4 h-4" /> Feito!
+              </span>
+            )}
           </div>
-        </div>
+        ))}
       </section>
     </main>
   );
