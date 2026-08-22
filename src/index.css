@@ -15,6 +15,13 @@
     --text-muted: #64748b;
     --border: #e2e8f0;
     --indigo-soft: #eff4ff;
+
+    /* Brand tokens — redefinidos por modo (Kids/Teen/Adult) em [data-mode]. */
+    --brand: #3525cd;
+    --brand-2: #8455ef;
+    --brand-dark: #2e1fb5;
+    --brand-soft: #eff4ff;
+    --brand-border: #c7d2fe;
   }
 
   .dark {
@@ -129,7 +136,7 @@
 /* Focus styles for TV/remote keyboard navigation */
 button:focus, a:focus, [role="button"]:focus, input:focus, select:focus, textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(69, 56, 153, 0.18), 0 0 0 1px rgba(53,37,205,0.9);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand, #3525cd) 18%, transparent), 0 0 0 1px var(--brand, #3525cd);
   border-radius: 10px;
 }
 
@@ -360,6 +367,115 @@ body.tv-mode .bottom-nav, body.tv-mode .bottom-nav button {
     #fffdf2;
 }
 
+/* ===========================================================================
+   MODO GLOBAL POR FAIXA ETÁRIA (Kids / Teen / Adult)
+   Cada modo redefine os tokens de marca e superfícies. Como estas regras vêm
+   DEPOIS do shim de dark e dos presets de tema, o modo tem precedência visual.
+   =========================================================================== */
+
+/* KIDS — lúdico, colorido, pastéis vibrantes, cantos bem arredondados. */
+:root[data-mode='kids'] {
+  --brand: #ff5ea3;
+  --brand-2: #9b5de5;
+  --brand-dark: #e63986;
+  --brand-soft: #ffe3f1;
+  --brand-border: #ffc2e0;
+  --bg: #fff6fb;
+  --surface: #ffffff;
+  --surface-2: #fff0f8;
+  --text: #3a2540;
+  --text-muted: #9b7b9c;
+  --border: #ffe0f0;
+  --indigo-soft: var(--brand-soft);
+  --font-heading: 'Baloo 2', 'Quicksand', -apple-system, sans-serif;
+}
+:root[data-mode='kids'] .rounded-2xl { border-radius: 1.5rem; }
+:root[data-mode='kids'] .rounded-3xl { border-radius: 2rem; }
+
+/* TEEN / GAMER — dark/neon estilo Steam/Discord, bordas brilhantes (RPG). */
+:root[data-mode='teen'] {
+  --brand: #22d3ee;
+  --brand-2: #d946ef;
+  --brand-dark: #06b6d4;
+  --brand-soft: #0e2730;
+  --brand-border: #0e7490;
+  --bg: #080b16;
+  --surface: #111a2e;
+  --surface-2: #0c1322;
+  --text: #e6f6ff;
+  --text-muted: #7d93b0;
+  --border: #1e2b45;
+  --indigo-soft: var(--brand-soft);
+  --font-heading: 'Orbitron', 'Plus Jakarta Sans', sans-serif;
+}
+:root[data-mode='teen'] .glass-card {
+  box-shadow: 0 0 22px color-mix(in srgb, var(--brand) 16%, transparent);
+}
+:root[data-mode='teen'] .fq-btn-primary {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--brand) 35%, transparent);
+}
+
+/* ADULT / CLEAN — minimalista fintech, cinzas elegantes, azul/verde corporativo. */
+:root[data-mode='adult'] {
+  --brand: #2563eb;
+  --brand-2: #059669;
+  --brand-dark: #1d4ed8;
+  --brand-soft: #eef3ff;
+  --brand-border: #dbe4ff;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f3f5f8;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: #e5e9ef;
+  --indigo-soft: var(--brand-soft);
+  --font-heading: 'Plus Jakarta Sans', -apple-system, sans-serif;
+}
+:root[data-mode='adult'] .rounded-2xl { border-radius: 0.85rem; }
+:root[data-mode='adult'] .rounded-3xl { border-radius: 1.1rem; }
+
+/* ---------------------------------------------------------------------------
+   Remapeamento global: a marca do app é #3525cd / indigo em quase todos os
+   componentes. Estas regras (escopo [data-mode]) repintam essas utilidades
+   para a cor de marca do modo ativo, tematizando TODAS as abas de uma vez.
+   --------------------------------------------------------------------------- */
+[data-mode] .text-indigo-600,
+[data-mode] .text-indigo-700,
+[data-mode] .text-indigo-900,
+[data-mode] .text-indigo-500 { color: var(--brand); }
+
+[data-mode] .text-indigo-400 { color: color-mix(in srgb, var(--brand) 80%, var(--text-muted)); }
+
+[data-mode] .bg-indigo-50,
+[data-mode] .bg-indigo-50\/60,
+[data-mode] .bg-indigo-50\/70,
+[data-mode] .bg-indigo-50\/80,
+[data-mode] .bg-indigo-100,
+[data-mode] .bg-indigo-100\/60,
+[data-mode] .bg-indigo-100\/70,
+[data-mode] .bg-indigo-soft { background-color: var(--brand-soft); }
+
+[data-mode] .border-indigo-100,
+[data-mode] .border-indigo-100\/60,
+[data-mode] .border-indigo-200,
+[data-mode] .border-indigo-200\/50 { border-color: var(--brand-border); }
+
+[data-mode] .hover\:bg-indigo-50:hover,
+[data-mode] .hover\:bg-indigo-50\/70:hover,
+[data-mode] .hover\:bg-indigo-50\/80:hover { background-color: var(--brand-soft); }
+
+[data-mode] .hover\:text-indigo-600:hover,
+[data-mode] .hover\:text-\[\#3525cd\]:hover { color: var(--brand); }
+
+[data-mode] .text-\[\#3525cd\] { color: var(--brand); }
+[data-mode] .bg-\[\#3525cd\] { background-color: var(--brand); }
+[data-mode] .border-\[\#3525cd\] { border-color: var(--brand); }
+[data-mode] .border-t-\[\#3525cd\] { border-top-color: var(--brand); }
+[data-mode] .from-\[\#4f46e5\] { --tw-gradient-from: var(--brand); }
+[data-mode] .to-\[\#8455ef\] { --tw-gradient-to: var(--brand-2); }
+[data-mode] .hover\:bg-\[\#2e1fb5\]:hover { background-color: var(--brand-dark); }
+[data-mode] .hover\:border-\[\#3525cd\]:hover { border-color: var(--brand); }
+
 /* Keep app content above the decorative winx sparkle layer. */
 #root { position: relative; z-index: 1; }
 
@@ -367,7 +483,7 @@ body.tv-mode .bottom-nav, body.tv-mode .bottom-nav button {
 .fq-input {
   height: 2.75rem;
   border-radius: 1rem;
-  border: 1px solid rgba(99, 102, 241, 0.25);
+  border: 1px solid var(--brand-border, rgba(99, 102, 241, 0.25));
   padding: 0 1rem;
   font-size: 0.875rem;
   font-weight: 600;
@@ -376,33 +492,38 @@ body.tv-mode .bottom-nav, body.tv-mode .bottom-nav button {
 }
 .fq-input:focus {
   outline: none;
-  border-color: #3525cd;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  border-color: var(--brand, #3525cd);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand, #3525cd) 15%, transparent);
 }
 .fq-btn-primary {
   height: 2.75rem;
   border-radius: 1rem;
   padding: 0 1.25rem;
-  background: #3525cd;
+  background: var(--brand, #3525cd);
   color: #fff;
   font-weight: 700;
   font-size: 0.875rem;
-  transition: background 0.2s, opacity 0.2s;
+  transition: background 0.2s, opacity 0.2s, box-shadow 0.2s;
 }
-.fq-btn-primary:hover:not(:disabled) { background: #2e1fb5; }
+.fq-btn-primary:hover:not(:disabled) { background: var(--brand-dark, #2e1fb5); }
 .fq-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 .fq-btn-ghost {
   height: 2.75rem;
   border-radius: 1rem;
   padding: 0 1.25rem;
   background: transparent;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   font-weight: 600;
   font-size: 0.875rem;
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.4));
   transition: border-color 0.2s;
 }
-.fq-btn-ghost:hover { border-color: #3525cd; }
+.fq-btn-ghost:hover { border-color: var(--brand, #3525cd); }
+
+/* Botão de CTA com gradiente da marca, reativo ao modo. */
+.fq-gradient {
+  background-image: linear-gradient(135deg, var(--brand), var(--brand-2));
+}
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

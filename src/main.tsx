@@ -4,6 +4,8 @@ import App from './App.tsx';
 import './index.css';
 import { applyTheme, getStoredTheme } from './lib/theme';
 import { applyThemePref, loadThemePref } from './lib/themes';
+import { applyMode, getStoredMode } from './lib/mode';
+import { ModeProvider } from './context/ModeContext';
 
 // Apply the persisted/system theme before first paint to avoid a flash.
 applyTheme(getStoredTheme());
@@ -12,9 +14,14 @@ applyTheme(getStoredTheme());
 const themePref = loadThemePref();
 applyThemePref(themePref.theme, themePref.variant);
 
+// Apply the global age-mode (Kids / Teen / Adult) before first paint.
+applyMode(getStoredMode());
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ModeProvider>
+      <App />
+    </ModeProvider>
   </StrictMode>,
 );
 

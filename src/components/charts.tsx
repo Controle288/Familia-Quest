@@ -25,7 +25,7 @@ export const BarChart: React.FC<{ items: BarItem[]; unit?: string }> = ({ items,
               className="h-full rounded-full transition-all duration-700"
               style={{
                 width: `${(it.value / max) * 100}%`,
-                background: it.color || 'linear-gradient(90deg,#3525cd,#8455ef)',
+                background: it.color || 'linear-gradient(90deg, var(--brand), var(--brand-2))',
               }}
             />
           </div>
@@ -91,7 +91,7 @@ export const RingChart: React.FC<{
           y="50%"
           dominantBaseline="central"
           textAnchor="middle"
-          className="fill-[#0b1c30] dark:fill-slate-100 font-heading"
+          className="fill-[var(--text)] font-heading"
           style={{ fontSize: 22, fontWeight: 800 }}
         >
           {centerLabel}
@@ -106,7 +106,7 @@ export const SparkBars: React.FC<{
   values: number[];
   labels?: string[];
   color?: string;
-}> = ({ values, labels, color = '#3525cd' }) => {
+}> = ({ values, labels, color = 'var(--brand)' }) => {
   const max = Math.max(1, ...values);
   return (
     <div className="flex items-end gap-1.5 h-28">

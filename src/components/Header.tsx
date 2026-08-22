@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Bell, Flame, ChevronDown, Check, UserCheck, Sparkles, RefreshCw, LogOut } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { ThemeToggle } from './ThemeToggle';
+import { ModeSelector } from './ModeSelector';
 import { relationshipLabel, RELATIONSHIP_META } from '../lib/avatars';
 
 export const Header: React.FC = () => {
@@ -27,7 +28,7 @@ export const Header: React.FC = () => {
   const pendingApprovalsCount = tasks.filter((t) => t.status === 'waiting_approval').length;
 
   return (
-    <header className="fixed top-0 left-0 right-0 w-full h-17 bg-[#f8f9ff]/90 backdrop-blur-md z-40 border-b border-indigo-100/60 dark:bg-slate-900/90 dark:border-indigo-800/60 transition-all">
+      <header className="fixed top-0 left-0 right-0 w-full h-17 bg-[var(--surface)]/90 backdrop-blur-md z-40 border-b border-[var(--border)]/60 transition-all">
       <div className="max-w-[1600px] mx-auto h-full px-4 md:px-6 xl:px-8 flex justify-between items-center">
         {/* Left: Brand Logo & Family Name */}
         <div className="flex items-center gap-3">
@@ -47,11 +48,9 @@ export const Header: React.FC = () => {
           >
             <div className="relative">
               {(() => {
-                const relColor = currentProfile.relationship
-                  ? RELATIONSHIP_META[currentProfile.relationship].color
-                  : currentProfile.role === 'parent'
-                  ? '#4f46e5'
-                  : '#3525cd';
+                  const relColor = currentProfile.relationship
+                    ? RELATIONSHIP_META[currentProfile.relationship].color
+                    : 'var(--brand)';
                 return (
                   <div
                     className="w-10 h-10 rounded-full overflow-hidden shadow-md bg-white"
@@ -74,7 +73,7 @@ export const Header: React.FC = () => {
 
             <div className="text-left hidden sm:block">
               <div className="flex items-center gap-1">
-                <span className="font-heading font-bold text-[#3525cd] text-base leading-tight">
+                <span className="font-heading font-bold text-[var(--brand)] text-base leading-tight">
                   {family.name}
                 </span>
                 <ChevronDown className="w-3.5 h-3.5 text-indigo-400" />
@@ -100,8 +99,8 @@ export const Header: React.FC = () => {
                   onClick={() => switchProfile(p.id)}
                   className={`px-3 py-1 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 ${
                     isSelected
-                      ? 'bg-[#3525cd] text-white shadow-sm'
-                      : 'text-indigo-900 hover:text-[#3525cd] hover:bg-white/60'
+                      ? 'bg-[var(--brand)] text-white shadow-sm'
+                      : 'text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand-soft)]'
                   }`}
                 >
                   {p.relationship
@@ -126,10 +125,14 @@ export const Header: React.FC = () => {
             onClick={() => window.location.reload()}
             aria-label="Recarregar página"
             title="Recarregar página"
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-indigo-50 text-[#3525cd] transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-indigo-50 text-[var(--brand)] transition-colors"
           >
               <RefreshCw className="w-5 h-5" />
           </button>
+
+          <div className="hidden md:block">
+            <ModeSelector variant="compact" />
+          </div>
 
           <ThemeToggle />
 
@@ -143,7 +146,7 @@ export const Header: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-indigo-50 text-[#3525cd] transition-colors relative"
+              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-indigo-50 text-[var(--brand)] transition-colors relative"
               aria-label="Notificações"
             >
               <Bell className="w-5 h-5" />
@@ -157,10 +160,10 @@ export const Header: React.FC = () => {
 
             {/* Notifications Dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-indigo-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 mt-2 w-80 bg-[var(--surface)] rounded-2xl shadow-xl border border-[var(--border)] p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <h4 className="font-heading font-bold text-slate-800 text-sm">Notificações</h4>
-                  <span className="text-xs bg-indigo-50 text-[#3525cd] px-2 py-0.5 rounded-full font-semibold">
+                  <span className="text-xs bg-indigo-50 text-[var(--brand)] px-2 py-0.5 rounded-full font-semibold">
                     {pendingApprovalsCount} pendente{pendingApprovalsCount !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -191,14 +194,14 @@ export const Header: React.FC = () => {
 
       {/* Profile Switcher Modal / Dropdown */}
       {showProfileMenu && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/20 backdrop-blur-xs flex items-start justify-center pt-20 px-4"
-          onClick={() => setShowProfileMenu(false)}
-        >
-          <div 
-            className="bg-white rounded-3xl p-5 shadow-2xl border border-indigo-100 w-full max-w-sm"
-            onClick={(e) => e.stopPropagation()}
+            <div 
+            className="fixed inset-0 z-50 bg-black/20 backdrop-blur-xs flex items-start justify-center pt-20 px-4"
+            onClick={() => setShowProfileMenu(false)}
           >
+            <div 
+              className="bg-[var(--surface)] rounded-3xl p-5 shadow-2xl border border-[var(--border)] w-full max-w-sm"
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-heading font-bold text-slate-900 text-base">Trocar Perfil</h3>
             </div>
@@ -227,7 +230,7 @@ export const Header: React.FC = () => {
                     }}
                     className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all ${
                       isActive
-                        ? 'bg-[#3525cd] text-white shadow-md'
+                        ? 'bg-[var(--brand)] text-white shadow-md'
                         : 'bg-slate-50 hover:bg-indigo-50/70 text-slate-800'
                     }`}
                   >

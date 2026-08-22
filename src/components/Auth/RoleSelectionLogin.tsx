@@ -317,7 +317,7 @@ const RoleSelectionLogin: React.FC<RoleSelectionLoginProps> = ({
           type="button"
           disabled={loading}
           onClick={handleSubmit}
-          className="w-full py-3 sm:py-2.5 px-6 rounded-2xl font-bold text-sm sm:text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-cyan-950/50 transition cursor-pointer mb-2 disabled:opacity-60"
+          className="w-full py-3 sm:py-2.5 px-6 rounded-2xl font-bold text-sm sm:text-xs uppercase tracking-wider flex items-center justify-center gap-2 fq-gradient text-white shadow-lg shadow-cyan-950/50 transition cursor-pointer mb-2 disabled:opacity-60"
         >
           <span>
             {authMode === 'entrar'

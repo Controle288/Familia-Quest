@@ -3,6 +3,7 @@ import { Camera, Trash2, Sparkles, MapPin, Clock } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { uploadAvatar, deleteAccount, createTicket, loadMyTickets } from '../lib/supabase';
 import { ThemePicker } from './ThemePicker';
+import { ModeSelector } from './ModeSelector';
 import { LocationPanel } from './LocationPanel';
 import { SupportTicket } from '../types';
 
@@ -111,7 +112,7 @@ export const SettingsTab: React.FC = () => {
         <h3 className="mb-4 font-heading text-lg font-bold text-slate-800 dark:text-white">Perfil</h3>
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#3525cd] bg-white">
+            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[var(--brand)] bg-white">
               {currentProfile?.avatar_url ? (
                 <img src={currentProfile.avatar_url} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -121,7 +122,7 @@ export const SettingsTab: React.FC = () => {
             <button
               onClick={() => fileRef.current?.click()}
               disabled={busy}
-              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#3525cd] text-white flex items-center justify-center shadow hover:bg-[#2e1fb5]"
+              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[var(--brand)] text-white flex items-center justify-center shadow hover:bg-[var(--brand-dark)]"
               title="Trocar foto"
             >
               <Camera className="w-4 h-4" />
@@ -133,11 +134,11 @@ export const SettingsTab: React.FC = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Seu nome"
-              className="w-full h-11 rounded-2xl border border-slate-200 px-4 text-sm font-semibold focus:border-[#3525cd] focus:ring-2 focus:ring-indigo-100 dark:bg-slate-800 dark:text-white"
+              className="w-full h-11 rounded-2xl border border-slate-200 px-4 text-sm font-semibold focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-soft)] dark:bg-slate-800 dark:text-white"
             />
             <button
               onClick={saveName}
-              className="w-full h-10 rounded-2xl bg-[#3525cd] text-white font-semibold text-sm hover:bg-[#2e1fb5]"
+              className="w-full h-10 rounded-2xl bg-[var(--brand)] text-white font-semibold text-sm hover:bg-[var(--brand-dark)]"
             >
               Salvar nome
             </button>
@@ -148,9 +149,20 @@ export const SettingsTab: React.FC = () => {
       {/* Temas */}
       <section className="rounded-3xl border border-indigo-100 bg-white/80 p-5 shadow-sm dark:bg-slate-900/70">
         <h3 className="mb-3 flex items-center gap-2 font-heading text-lg font-bold text-slate-800 dark:text-white">
-          <Sparkles className="w-5 h-5 text-[#8455ef]" /> Tema e aparência
+          <Sparkles className="w-5 h-5 text-[var(--brand-2)]" /> Tema e aparência
         </h3>
         <ThemePicker />
+      </section>
+
+      {/* Modo de exibição por faixa etária */}
+      <section className="rounded-3xl border border-[var(--border)] bg-[var(--surface)]/80 p-5 shadow-sm">
+        <h3 className="mb-3 flex items-center gap-2 font-heading text-lg font-bold text-[var(--text)]">
+          <Sparkles className="w-5 h-5 text-[var(--brand-2)]" /> Modo de exibição
+        </h3>
+        <p className="mb-4 text-sm text-[var(--text-muted)]">
+          Escolha o visual de todo o app (Menu, Missões, Loja, Social, Estatísticas e Ajustes). A escolha fica salva no dispositivo.
+        </p>
+        <ModeSelector variant="full" />
       </section>
 
       {/* Recursos opcionais — somente responsáveis */}
@@ -176,7 +188,7 @@ export const SettingsTab: React.FC = () => {
         {familySettings?.location_enabled && isPremium && (
           <button
             onClick={() => setShowLocation(true)}
-            className="flex items-center gap-2 rounded-2xl bg-indigo-50 px-4 py-2.5 text-sm font-bold text-[#3525cd] hover:bg-indigo-100"
+            className="flex items-center gap-2 rounded-2xl bg-indigo-50 px-4 py-2.5 text-sm font-bold text-[var(--brand)] hover:bg-indigo-100"
           >
             <MapPin className="w-4 h-4" /> Ver localização da família
           </button>
@@ -210,7 +222,7 @@ export const SettingsTab: React.FC = () => {
                 </div>
                 <p className="mt-1 text-sm text-slate-800 dark:text-white">{t.message}</p>
                 {t.admin_reply && (
-                  <p className="mt-2 rounded-xl bg-indigo-50 p-2 text-sm text-[#3525cd]">
+                  <p className="mt-2 rounded-xl bg-indigo-50 p-2 text-sm text-[var(--brand)]">
                     <span className="font-semibold">Resposta: </span>
                     {t.admin_reply}
                   </p>
@@ -228,12 +240,12 @@ export const SettingsTab: React.FC = () => {
               onChange={(e) => setTicketMsg(e.target.value)}
               placeholder="Descreva sua dúvida ou problema..."
               rows={3}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium focus:border-[#3525cd] focus:ring-2 focus:ring-indigo-100 dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-soft)] dark:bg-slate-800 dark:text-white"
             />
             <button
               onClick={sendTicket}
               disabled={ticketBusy || !ticketMsg.trim()}
-              className="self-start rounded-2xl bg-[#3525cd] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#2e1fb5] disabled:opacity-60"
+              className="self-start rounded-2xl bg-[var(--brand)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[var(--brand-dark)] disabled:opacity-60"
             >
               {ticketBusy ? 'Enviando…' : 'Enviar ticket'}
             </button>
@@ -281,7 +293,7 @@ const Toggle: React.FC<{
 }> = ({ icon, label, desc, checked, disabled, onChange }) => (
   <div className="flex items-center justify-between gap-3">
     <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-[#3525cd]">{icon}</div>
+      <div className="mt-0.5 text-[var(--brand)]">{icon}</div>
       <div>
         <p className="text-sm font-semibold text-slate-800 dark:text-white">{label}</p>
         <p className="text-xs text-slate-500">{desc}</p>
@@ -290,7 +302,7 @@ const Toggle: React.FC<{
     <button
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 rounded-full transition-all ${checked ? 'bg-[#3525cd]' : 'bg-slate-300'} ${disabled ? 'opacity-50' : ''}`}
+      className={`relative h-7 w-12 rounded-full transition-all ${checked ? 'bg-[var(--brand)]' : 'bg-slate-300'} ${disabled ? 'opacity-50' : ''}`}
     >
       <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${checked ? 'left-6' : 'left-1'}`} />
     </button>
