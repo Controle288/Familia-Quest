@@ -40,7 +40,7 @@ const statusToMock = (s: string): FamiliaTask['status'] =>
   s === 'completed' ? 'concluida' : s === 'waiting_approval' ? 'em_progresso' : 'pendente';
 
 const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ onGoToShop }) => {
-  const { currentProfile, tasks, rewards, completeTask, redeemReward } = useFamily();
+  const { currentProfile, tasks, rewards, completeTask, redeemReward, updateProfile } = useFamily();
 
   const [currentTheme, setCurrentTheme] = useState<ThemeName>('ocean');
   const [showSettings, setShowSettings] = useState(false);
@@ -89,7 +89,7 @@ const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ onGoT
       xp: currentProfile.xp,
       level: currentProfile.level,
       balance: currentProfile.balance,
-      financialGoal: null,
+      financialGoal: currentProfile.financial_goal ?? null,
       tasks: childTasks,
       availableRewards,
     };
@@ -117,6 +117,16 @@ const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ onGoT
     }
   };
 
+  const handleSetGoal = async (goal: { name: string; target: number; current: number }) => {
+    if (!currentProfile) return;
+    try {
+      await updateProfile(currentProfile.id, { financial_goal: goal });
+      flash('Meta financeira atualizada! 🎯');
+    } catch {
+      flash('Não foi possível salvar a meta.');
+    }
+  };
+
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center text-slate-400">
@@ -125,7 +135,7 @@ const DashboardFilhoContainer: React.FC<DashboardFilhoContainerProps> = ({ onGoT
     );
   }
 
-  const commonProps = { profile, theme: themeConfig, onCompleteTask: handleCompleteTask, onRedeem: handleRedeem };
+  const commonProps = { profile, theme: themeConfig, onCompleteTask: handleCompleteTask, onRedeem: handleRedeem, onSetGoal: handleSetGoal };
 
   return (
     <div className={`min-h-screen ${themeConfig.bg} p-4 md:p-6 ${themeConfig.text} font-sans relative`}>

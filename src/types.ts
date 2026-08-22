@@ -36,6 +36,7 @@ export interface Profile {
   xp_to_next_level: number;
   balance: number;
   streak_days: number;
+  financial_goal?: { name: string; target: number; current: number } | null;
   theme_pref?: string;
   created_at: string;
 }

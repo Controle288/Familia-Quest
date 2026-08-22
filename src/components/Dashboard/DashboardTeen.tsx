@@ -12,6 +12,7 @@ interface DashboardTeenProps {
   theme: ThemeConfig;
   onCompleteTask: (id: string) => void;
   onRedeem: (reward: FamiliaReward) => void;
+  onSetGoal?: (goal: { name: string; target: number; current: number }) => void;
 }
 
 const XP_PER_LEVEL = 2000;

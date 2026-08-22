@@ -3,8 +3,8 @@
 // extrato de tarefas, saldo acumulado, meta financeira e gráfico simples de
 // rendimento semanal.
 
-import React from 'react';
-import { TrendingUp, FileText, PiggyBank, Target, Banknote, ArrowDownRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { TrendingUp, FileText, PiggyBank, Target, Banknote, ArrowDownRight, Pencil } from 'lucide-react';
 import { ChildProfile, FamiliaTask, FinancialGoal, FamiliaReward } from '../../mocks/familiaDataMock';
 import { ThemeConfig } from './DashboardThemes';
 
@@ -13,18 +13,31 @@ interface DashboardCleanProps {
   theme: ThemeConfig;
   onCompleteTask: (id: string) => void;
   onRedeem: (reward: FamiliaReward) => void;
+  onSetGoal?: (goal: { name: string; target: number; current: number }) => void;
 }
 
 // Rendimento semanal simulado (R$) para o gráfico de barras simples.
 const WEEKLY_EARNINGS = [8, 12, 5, 15, 9, 14, 11];
 
-const DashboardClean: React.FC<DashboardCleanProps> = ({ profile, theme, onCompleteTask }) => {
+const DashboardClean: React.FC<DashboardCleanProps> = ({ profile, theme, onCompleteTask, onSetGoal }) => {
   const goal: FinancialGoal = profile.financialGoal ?? { name: 'Meta', target: 1, current: 0 };
   const goalProgress = Math.min(100, Math.round((goal.current / goal.target) * 100));
   const maxWeek = Math.max(...WEEKLY_EARNINGS);
 
   const completed = profile.tasks.filter((t) => t.status === 'concluida').length;
   const weekTotal = WEEKLY_EARNINGS.reduce((a, b) => a + b, 0);
+
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalName, setGoalName] = useState(goal.name);
+  const [goalTarget, setGoalTarget] = useState(String(goal.target));
+  const [goalCurrent, setGoalCurrent] = useState(String(goal.current));
+
+  const saveGoal = () => {
+    const target = Math.max(0, Number(goalTarget) || 0);
+    const current = Math.max(0, Number(goalCurrent) || 0);
+    onSetGoal?.({ name: goalName.trim() || 'Minha Meta', target, current });
+    setEditingGoal(false);
+  };
 
   return (
     <main className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -116,17 +129,83 @@ const DashboardClean: React.FC<DashboardCleanProps> = ({ profile, theme, onCompl
       {/* META FINANCEIRA */}
       <section>
         <div className={`${theme.card} ${theme.border} border rounded-2xl p-6`}>
-          <h3 className={`text-lg font-extrabold mb-4 flex items-center gap-2 ${theme.text}`}>
-            <Target className={`w-5 h-5 ${theme.primary}`} /> Meta de Economia
-          </h3>
-          <p className={`font-bold ${theme.text}`}>{goal.name}</p>
-          <p className={`text-sm ${theme.textMuted} mb-3`}>
-            R$ {goal.current.toFixed(2)} de R$ {goal.target.toFixed(2)}
-          </p>
-          <div className={`w-full ${theme.accent} rounded-full h-3 overflow-hidden border ${theme.border}`}>
-            <div className={`h-full ${theme.primaryBg} transition-all duration-500`} style={{ width: `${goalProgress}%` }} />
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-lg font-extrabold flex items-center gap-2 ${theme.text}`}>
+              <Target className={`w-5 h-5 ${theme.primary}`} /> Meta de Economia
+            </h3>
+            {onSetGoal && !editingGoal && (
+              <button
+                onClick={() => {
+                  setGoalName(goal.name);
+                  setGoalTarget(String(goal.target));
+                  setGoalCurrent(String(goal.current));
+                  setEditingGoal(true);
+                }}
+                className={`flex items-center gap-1 text-xs font-bold ${theme.primary} ${theme.accent} px-3 py-1.5 rounded-full`}
+              >
+                <Pencil className="w-3.5 h-3.5" /> Editar
+              </button>
+            )}
           </div>
-          <p className={`text-xs mt-2 ${theme.textMuted}`}>{goalProgress}% alcançado</p>
+
+          {editingGoal ? (
+            <div className="space-y-3">
+              <div>
+                <label className={`text-xs font-semibold ${theme.textMuted}`}>Nome da meta</label>
+                <input
+                  value={goalName}
+                  onChange={(e) => setGoalName(e.target.value)}
+                  className={`w-full mt-1 px-3 py-2 rounded-lg ${theme.bg} ${theme.border} border ${theme.text} text-sm outline-none`}
+                  placeholder="Ex: Economizar para o celular"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={`text-xs font-semibold ${theme.textMuted}`}>Atual (R$)</label>
+                  <input
+                    type="number"
+                    value={goalCurrent}
+                    onChange={(e) => setGoalCurrent(e.target.value)}
+                    className={`w-full mt-1 px-3 py-2 rounded-lg ${theme.bg} ${theme.border} border ${theme.text} text-sm outline-none`}
+                  />
+                </div>
+                <div>
+                  <label className={`text-xs font-semibold ${theme.textMuted}`}>Objetivo (R$)</label>
+                  <input
+                    type="number"
+                    value={goalTarget}
+                    onChange={(e) => setGoalTarget(e.target.value)}
+                    className={`w-full mt-1 px-3 py-2 rounded-lg ${theme.bg} ${theme.border} border ${theme.text} text-sm outline-none`}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={saveGoal}
+                  className={`flex-1 py-2.5 rounded-xl font-extrabold text-sm ${theme.primaryBg} ${theme.primaryText} active:scale-95 transition`}
+                >
+                  Salvar Meta
+                </button>
+                <button
+                  onClick={() => setEditingGoal(false)}
+                  className={`px-4 py-2.5 rounded-xl font-bold text-sm ${theme.accent} ${theme.text}`}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className={`font-bold ${theme.text}`}>{goal.name}</p>
+              <p className={`text-sm ${theme.textMuted} mb-3`}>
+                R$ {goal.current.toFixed(2)} de R$ {goal.target.toFixed(2)}
+              </p>
+              <div className={`w-full ${theme.accent} rounded-full h-3 overflow-hidden border ${theme.border}`}>
+                <div className={`h-full ${theme.primaryBg} transition-all duration-500`} style={{ width: `${goalProgress}%` }} />
+              </div>
+              <p className={`text-xs mt-2 ${theme.textMuted}`}>{goalProgress}% alcançado</p>
+            </>
+          )}
         </div>
       </section>
     </main>

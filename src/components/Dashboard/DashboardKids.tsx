@@ -12,6 +12,7 @@ interface DashboardKidsProps {
   theme: ThemeConfig;
   onCompleteTask: (id: string) => void;
   onRedeem: (reward: FamiliaReward) => void;
+  onSetGoal?: (goal: { name: string; target: number; current: number }) => void;
 }
 
 const taskNodeStyles: Record<FamiliaTask['status'], string> = {
