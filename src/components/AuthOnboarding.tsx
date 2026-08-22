@@ -9,6 +9,7 @@ import {
   signInWithEmail,
   signUpWithEmail,
   loadFamilySettings,
+  isFamilyPremium,
   getFamilyMemberCounts,
   type ProfileRecord,
   type FamilyRecord,
@@ -175,7 +176,7 @@ export const AuthOnboarding: React.FC = () => {
       if (!family) throw new Error('Código não encontrado');
 
       const settings = await loadFamilySettings(family.id);
-      const isPremium = (settings?.plan ?? 'free') === 'premium';
+      const isPremium = isFamilyPremium(settings);
       if (!isPremium) {
         const { parents, children } = await getFamilyMemberCounts(family.id);
         if (parents !== 1 || children >= 2) {
@@ -254,7 +255,7 @@ export const AuthOnboarding: React.FC = () => {
       if (!family) throw new Error('Código não encontrado');
 
       const settings = await loadFamilySettings(family.id);
-      const isPremium = (settings?.plan ?? 'free') === 'premium';
+      const isPremium = isFamilyPremium(settings);
       if (!isPremium) {
         const { parents } = await getFamilyMemberCounts(family.id);
         if (parents >= 2) {

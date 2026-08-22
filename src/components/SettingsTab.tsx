@@ -12,6 +12,7 @@ export const SettingsTab: React.FC = () => {
     family,
     familySettings,
     isPremium,
+    premiumExpiresAt,
     isAdminUser,
     updateProfile,
     updateFamilySettings,
@@ -165,15 +166,39 @@ export const SettingsTab: React.FC = () => {
         <section className="rounded-3xl border border-indigo-100 bg-white/80 p-5 shadow-sm dark:bg-slate-900/70">
           <div className="flex items-center justify-between">
             <h3 className="font-heading text-lg font-bold text-slate-800 dark:text-white">Plano</h3>
-            <span className={`rounded-full px-3 py-1 text-xs font-bold ${isPremium ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-              {isPremium ? 'Premium' : 'Grátis'}
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-bold ${
+                isPremium
+                  ? 'bg-amber-100 text-amber-700'
+                  : familySettings?.plan === 'premium'
+                  ? 'bg-rose-100 text-rose-700'
+                  : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {isPremium ? 'Premium' : familySettings?.plan === 'premium' ? 'Expirado' : 'Grátis'}
             </span>
           </div>
           <p className="mt-2 text-sm text-slate-500">
-            {isPremium
-              ? 'Você tem acesso a todos os temas, horários e localização.'
-              : 'No plano grátis: até 2 responsáveis ou 1 responsável + 2 filhos, sem temas premium.'}
+            {(() => {
+              if (!isPremium) {
+                return familySettings?.plan === 'premium'
+                  ? 'Sua assinatura expirou. Renove para voltar a ter acesso premium.'
+                  : 'No plano grátis: até 2 responsáveis ou 1 responsável + 2 filhos, sem temas premium.';
+              }
+              if (!premiumExpiresAt) return 'Premium vitalício (pagamento único) para toda a família.';
+              const days = Math.ceil((new Date(premiumExpiresAt).getTime() - Date.now()) / 86400000);
+              const date = new Date(premiumExpiresAt).toLocaleDateString('pt-BR');
+              return days > 0
+                ? `Premium da família válido até ${date} (faltam ${days} ${days === 1 ? 'dia' : 'dias'}).`
+                : `Premium da família expira hoje (${date}).`;
+            })()}
           </p>
+          {/* Status compartilhado: todos os membros da família veem o mesmo prazo. */}
+          {isPremium && premiumExpiresAt && (
+            <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
+              Assinatura unificada da família — todos os membros (responsaveis e filhos) têm o mesmo acesso e validade.
+            </p>
+          )}
           <div className="mt-4 space-y-3">
             {plans.map((plan) => (
               <div

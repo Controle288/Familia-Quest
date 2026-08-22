@@ -12,6 +12,7 @@ import {
   onAuthChange,
   signOutUser,
   loadFamilySettings,
+  isFamilyPremium,
   upsertFamilySettings,
   getCurrentIsAdmin,
   type AuthUser,
@@ -63,6 +64,7 @@ interface FamilyContextType {
   familySettings: FamilySettings | null;
   isAdminUser: boolean;
   isPremium: boolean;
+  premiumExpiresAt: string | null;
   updateFamilySettings: (patch: Partial<FamilySettings>) => Promise<void>;
 
   // Actions
@@ -848,7 +850,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isSyncing,
         familySettings,
         isAdminUser,
-        isPremium: isAdminUser || familySettings?.plan === 'premium',
+        isPremium: isAdminUser || isFamilyPremium(familySettings),
+        premiumExpiresAt: isFamilyPremium(familySettings)
+          ? (familySettings?.plan_expires_at ?? null)
+          : null,
         updateFamilySettings,
         setActiveTab,
         setParentSubTab,

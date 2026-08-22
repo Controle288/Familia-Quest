@@ -23,7 +23,7 @@ import { useEffect } from 'react';
 import { initRemoteNavigation } from './utils/remoteNavigation';
 
 const MainAppContent: React.FC = () => {
-  const { activeTab, setActiveTab, currentProfile, authUser, isSyncing, profiles, family, isAdminUser } = useFamily();
+  const { activeTab, setActiveTab, currentProfile, authUser, isSyncing, profiles, family, isAdminUser, isPremium, premiumExpiresAt, familySettings } = useFamily();
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isCreateRewardOpen, setIsCreateRewardOpen] = useState(false);
   const [muted, setMutedState] = useState(isMuted());
@@ -68,7 +68,29 @@ const MainAppContent: React.FC = () => {
                 }}
               />
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Menu</p>
-              <h2 className="mt-2 font-heading text-xl font-bold text-slate-900">Família</h2>
+              <div className="mt-2 flex items-center gap-2">
+                <h2 className="font-heading text-xl font-bold text-slate-900">Família</h2>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    isPremium
+                      ? 'bg-amber-100 text-amber-700'
+                      : familySettings?.plan === 'premium'
+                      ? 'bg-rose-100 text-rose-700'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {isPremium
+                    ? premiumExpiresAt
+                      ? (() => {
+                          const d = Math.ceil((new Date(premiumExpiresAt).getTime() - Date.now()) / 86400000);
+                          return d > 0 ? `Premium · ${d}d` : 'Premium · hoje';
+                        })()
+                      : 'Premium'
+                    : familySettings?.plan === 'premium'
+                    ? 'Expirado'
+                    : 'Grátis'}
+                </span>
+              </div>
             </div>
 
             <nav className="space-y-2">

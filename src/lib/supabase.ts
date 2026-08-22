@@ -451,6 +451,18 @@ export const loadFamilySettings = async (familyId: string) => {
   return data;
 };
 
+// Status premium efetivo da FAMÍLIA, considerando a validade da assinatura.
+// A assinatura é vinculada à família (family_settings), portanto TODOS os
+// membros (responsaveis e filhos) herdam o acesso premium instantaneamente.
+export const isFamilyPremium = (
+  settings: { plan?: string | null; plan_expires_at?: string | null } | null | undefined
+): boolean => {
+  if (!settings || settings.plan !== 'premium') return false;
+  const exp = settings.plan_expires_at;
+  if (!exp) return true; // sem data de expiração = premium permanente (pagamento único)
+  return new Date(exp).getTime() > Date.now();
+};
+
 export const upsertFamilySettings = async (settings: Record<string, unknown>) => {
   if (!isSupabaseConfigured) return null;
   const { data, error } = await supabase
